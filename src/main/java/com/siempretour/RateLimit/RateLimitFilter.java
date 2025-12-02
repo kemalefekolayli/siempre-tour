@@ -12,7 +12,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -38,15 +37,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String identifier;
 
         // Auth endpoints - rate limit by IP (stricter)
-        if (path.startsWith("/api/users/login") || path.startsWith("/api/users/register")) {
+        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register")) {
             bucket = rateLimitConfig.resolveAuthBucket(clientIp);
             identifier = "IP:" + clientIp;
         }
         // API endpoints - rate limit by user if authenticated, otherwise by IP
         else if (path.startsWith("/api/")) {
-            String userId = getCurrentUserId();
+            Long userId = getCurrentUserId();
             if (userId != null) {
-                bucket = rateLimitConfig.resolveApiBucket(userId);
+                bucket = rateLimitConfig.resolveApiBucket(String.valueOf(userId));
                 identifier = "User:" + userId;
             } else {
                 bucket = rateLimitConfig.resolveApiBucket(clientIp);
@@ -100,11 +99,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    private String getCurrentUserId() {
+    private Long getCurrentUserId() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-                return jwtAuth.getToken().getSubject();
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof Long) {
+                return (Long) authentication.getPrincipal();
             }
         } catch (Exception ignored) {
             // Not authenticated
