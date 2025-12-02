@@ -1,0 +1,13 @@
+package com.siempretour;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class SiempreTourApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SiempreTourApplication.class, args);
+    }
+
+}

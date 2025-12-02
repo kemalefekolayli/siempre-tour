@@ -11,8 +11,8 @@
     <groupId>com.example</groupId>
     <artifactId>cftcbrandtech</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>cftcbrandtech</name>
-    <description>cftcbrandtech</description>
+    <name>siempretour</name>
+    <description>siempretour</description>
     <url/>
     <licenses>
         <license/>
@@ -150,5 +150,6 @@
             </plugin>
         </plugins>
     </build>
+
 
 </project>
