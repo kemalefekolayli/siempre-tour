@@ -33,15 +33,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-                        // Health check (useful for Railway)
-                        .requestMatchers("/actuator/health", "/health").permitAll()
-                        // Protected endpoints
-                        .requestMatchers("/api/users/me").authenticated()
-                        .requestMatchers("/api/availability/**").authenticated()
-                        .requestMatchers("/api/properties/**").authenticated()
-                        .requestMatchers("/api/reservations/**").authenticated()
+                        // SecurityConfig.java içinde authorizeHttpRequests kısmına ekle:
+                        .requestMatchers("/api/tours/published", "/api/tours/active", "/api/tours/{id}").permitAll() // Public endpoints
+                        .requestMatchers("/api/tours/**").authenticated() // Protected endpoints
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

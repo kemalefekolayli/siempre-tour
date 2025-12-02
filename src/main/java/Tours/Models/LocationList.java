@@ -1,4 +1,4 @@
-package Models;
+package Tours.Models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;

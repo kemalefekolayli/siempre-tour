@@ -1,15 +1,19 @@
-package Models;
+package Tours.Models;
+
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "tour")
+@Table(name = "tours")
 @Data
 public class Tour {
 
@@ -22,10 +26,18 @@ public class Tour {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
-    private LocationList locationsToBeVisited;
+    private List<String> destinations;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private TourCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private TourStatus status;
 
     @Column(length = 100)
-    private String startCity; // uçak nerden kalkıyo
+    private String departureCity; // uçak nerden kalkıyo
 
     @NotNull
     @Min(value = 1)
@@ -55,6 +67,17 @@ public class Tour {
     @Column(nullable = false)
     private Integer availableSeats;
 
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false)
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discountedPrice;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -67,5 +90,24 @@ public class Tour {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isBookable() {
+        return isActive &&
+                status == TourStatus.PUBLISHED &&
+                availableSeats > 0 &&
+                LocalDateTime.now().isBefore(bookingDeadline != null ? bookingDeadline : startDate);
+    }
+
+    public void decrementAvailableSeats(int count) {
+        if (availableSeats >= count) {
+            availableSeats -= count;
+            // Eğer koltuk kalmadıysa, status'u SOLD_OUT yap
+            if (availableSeats == 0) {
+                status = TourStatus.SOLD_OUT;
+            }
+        } else {
+            throw new IllegalStateException("Not enough available seats");
+        }
     }
 }
