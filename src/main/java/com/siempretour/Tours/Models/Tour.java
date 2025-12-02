@@ -73,6 +73,9 @@ public class Tour {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(nullable = true)
+    private Long createdBy;
+
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", inclusive = false)
     @Column(nullable = false, precision = 10, scale = 2)
