@@ -42,7 +42,7 @@ public class TourService {
             throw new GlobalException(ErrorCodes.VALIDATION_ERROR);
         }
 
-        Tour tour = new Tour();
+        Tour tour = new Tour(); // todo : buraya ve gerekli olan her yere mapper yaz
         tour.setName(dto.getName());
         tour.setPrice(dto.getPrice());
         tour.setDiscountedPrice(dto.getDiscountedPrice());
