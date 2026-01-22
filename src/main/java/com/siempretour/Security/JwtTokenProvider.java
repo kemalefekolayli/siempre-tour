@@ -25,9 +25,7 @@ public class JwtTokenProvider {
         this.validityInMilliseconds = validityInMilliseconds;
     }
 
-    /**
-     * Generate JWT token
-     */
+
     public String createToken(String email, Long userId, String role) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
@@ -58,30 +56,19 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Get email from token
-     */
     public String getEmailFromToken(String token) {
         return getClaims(token).getSubject();
     }
 
-    /**
-     * Get userId from token
-     */
+
     public Long getUserIdFromToken(String token) {
         return getClaims(token).get("userId", Long.class);
     }
 
-    /**
-     * Get role from token
-     */
     public String getRoleFromToken(String token) {
         return getClaims(token).get("role", String.class);
     }
 
-    /**
-     * Parse claims from token
-     */
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)

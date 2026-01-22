@@ -49,6 +49,9 @@ public class TourCreateDto {
 
     private LocalDateTime bookingDeadline;
 
+    private String shipName;
+    private String shipCompany;
+
     private TourCategory category;
 
 }

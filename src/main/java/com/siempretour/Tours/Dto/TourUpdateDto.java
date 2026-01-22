@@ -39,6 +39,9 @@ public class TourUpdateDto {
     @Min(value = 1)
     private Integer minParticipants;
 
+    private String shipName;
+    private String shipCompany;
+
     @Min(value = 1)
     private Integer maxParticipants;
 

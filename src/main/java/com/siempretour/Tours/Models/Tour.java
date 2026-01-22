@@ -84,6 +84,12 @@ public class Tour {
     @Column(precision = 10, scale = 2)
     private BigDecimal discountedPrice;
 
+    @Column(length = 100)
+    private String shipName;     // Sadece CRUISE ise dolu olacak
+
+    @Column(length = 100)
+    private String shipCompany;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

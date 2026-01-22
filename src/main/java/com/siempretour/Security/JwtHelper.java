@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtHelper {
 
-    /**
-     * Get current user ID from SecurityContext
-     */
+
     public Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -22,9 +20,7 @@ public class JwtHelper {
         throw new GlobalException(ErrorCodes.AUTH_TOKEN_INVALID);
     }
 
-    /**
-     * Check if current user has specific role
-     */
+
     public boolean hasRole(String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -34,9 +30,7 @@ public class JwtHelper {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_" + role.toUpperCase()));
     }
 
-    /**
-     * Check if user is admin
-     */
+
     public boolean isAdmin() {
         return hasRole("ADMIN");
     }

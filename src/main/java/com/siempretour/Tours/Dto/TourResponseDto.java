@@ -26,6 +26,8 @@ public class TourResponseDto {
     private LocalDateTime bookingDeadline;
     private TourCategory category;
     private TourStatus status;
+    private String shipName;
+    private String shipCompany;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isActive;
