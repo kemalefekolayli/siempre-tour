@@ -3,16 +3,22 @@ package com.siempretour.Tours;
 
 import com.siempretour.Exceptions.ErrorCodes;
 import com.siempretour.Exceptions.GlobalException;
+import com.siempretour.Filter.PagedResponse;
+import com.siempretour.Filter.PaginationConstants;
+import com.siempretour.Security.JwtHelper;
 import com.siempretour.Tours.Dto.TourCreateDto;
+
+import com.siempretour.Tours.Dto.TourFilterDto;
 import com.siempretour.Tours.Dto.TourResponseDto;
 import com.siempretour.Tours.Dto.TourUpdateDto;
 import com.siempretour.Tours.Models.Tour;
-
-import com.siempretour.Security.JwtHelper;
-
 import com.siempretour.Tours.Models.TourStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +48,7 @@ public class TourService {
             throw new GlobalException(ErrorCodes.VALIDATION_ERROR);
         }
 
-        Tour tour = new Tour(); // todo : buraya ve gerekli olan her yere mapper yaz
+        Tour tour = new Tour();
         tour.setName(dto.getName());
         tour.setPrice(dto.getPrice());
         tour.setDiscountedPrice(dto.getDiscountedPrice());
@@ -55,6 +61,7 @@ public class TourService {
         tour.setEndDate(dto.getEndDate());
         tour.setBookingDeadline(dto.getBookingDeadline());
         tour.setCategory(dto.getCategory());
+        tour.setCreatedBy(userId);
 
         Tour savedTour = tourRepository.save(tour);
         log.info("Tour created with ID: {} by user: {}", savedTour.getId(), userId);
@@ -68,7 +75,6 @@ public class TourService {
 
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
-
 
         // Update only non-null fields
         if (dto.getName() != null) tour.setName(dto.getName());
@@ -103,8 +109,7 @@ public class TourService {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
 
-
-        // Soft delete - sadece isActive'i false yap
+        // Soft delete
         tour.setIsActive(false);
         tour.setStatus(TourStatus.CANCELLED);
         tourRepository.save(tour);
@@ -119,19 +124,73 @@ public class TourService {
         return mapToResponseDto(tour);
     }
 
-    public List<TourResponseDto> getAllTours() {
+    // ==================== Paginated Methods ====================
+
+    public PagedResponse<TourResponseDto> getAllTours(int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Tour> tourPage = tourRepository.findAll(pageable);
+        return mapToPagedResponse(tourPage);
+    }
+
+    public PagedResponse<TourResponseDto> getActiveTours(int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Tour> tourPage = tourRepository.findByIsActiveTrue(pageable);
+        return mapToPagedResponse(tourPage);
+    }
+
+    public PagedResponse<TourResponseDto> getPublishedTours(int page, int size, String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Tour> tourPage = tourRepository.findByIsActiveTrueAndStatusAndStartDateAfter(
+                TourStatus.PUBLISHED,
+                LocalDateTime.now(),
+                pageable
+        );
+        return mapToPagedResponse(tourPage);
+    }
+
+    public PagedResponse<TourResponseDto> getMyTours(int page, int size, String sortBy, String sortDirection) {
+        Long userId = jwtHelper.getCurrentUserId();
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<Tour> tourPage = tourRepository.findByCreatedBy(userId, pageable);
+        return mapToPagedResponse(tourPage);
+    }
+
+    public PagedResponse<TourResponseDto> filterTours(TourFilterDto filter, int page, int size,
+                                                      String sortBy, String sortDirection) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+
+        Page<Tour> tourPage = tourRepository.findWithFilters(
+                filter.getStatus(),
+                filter.getCategory(),
+                filter.getMinPrice(),
+                filter.getMaxPrice(),
+                filter.getDepartureCity(),
+                filter.getStartDateFrom(),
+                filter.getStartDateTo(),
+                filter.getMinDuration(),
+                filter.getMaxDuration(),
+                filter.getSearchQuery(),
+                pageable
+        );
+
+        return mapToPagedResponse(tourPage);
+    }
+
+    // ==================== Non-Paginated Methods (backwards compatibility) ====================
+
+    public List<TourResponseDto> getAllToursNonPaged() {
         return tourRepository.findAll().stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponseDto> getActiveTours() {
+    public List<TourResponseDto> getActiveToursNonPaged() {
         return tourRepository.findByIsActiveTrue().stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponseDto> getPublishedTours() {
+    public List<TourResponseDto> getPublishedToursNonPaged() {
         return tourRepository.findByIsActiveTrueAndStatusAndStartDateAfter(
                         TourStatus.PUBLISHED,
                         LocalDateTime.now()
@@ -140,18 +199,48 @@ public class TourService {
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponseDto> getMyTours() {
+    public List<TourResponseDto> getMyToursNonPaged() {
         Long userId = jwtHelper.getCurrentUserId();
         return tourRepository.findByCreatedBy(userId).stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
+    // ==================== Helper Methods ====================
+
+    private Pageable createPageable(int page, int size, String sortBy, String sortDirection) {
+        int normalizedPage = PaginationConstants.normalizePageNumber(page);
+        int normalizedSize = PaginationConstants.normalizePageSize(size);
+
+        Sort sort = Sort.by(sortBy != null ? sortBy : "createdAt");
+        sort = "asc".equalsIgnoreCase(sortDirection) ? sort.ascending() : sort.descending();
+
+        return PageRequest.of(normalizedPage, normalizedSize, sort);
+    }
+
+    private PagedResponse<TourResponseDto> mapToPagedResponse(Page<Tour> tourPage) {
+        List<TourResponseDto> content = tourPage.getContent().stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+
+        return PagedResponse.<TourResponseDto>builder()
+                .content(content)
+                .page(tourPage.getNumber())
+                .size(tourPage.getSize())
+                .totalElements(tourPage.getTotalElements())
+                .totalPages(tourPage.getTotalPages())
+                .first(tourPage.isFirst())
+                .last(tourPage.isLast())
+                .hasNext(tourPage.hasNext())
+                .hasPrevious(tourPage.hasPrevious())
+                .build();
+    }
+
     private TourResponseDto mapToResponseDto(Tour tour) {
         TourResponseDto dto = new TourResponseDto();
         dto.setId(tour.getId());
         dto.setName(tour.getName());
-
+        dto.setDestinations(tour.getDestinations());
         dto.setPrice(tour.getPrice());
         dto.setDiscountedPrice(tour.getDiscountedPrice());
         dto.setDepartureCity(tour.getDepartureCity());
@@ -164,6 +253,8 @@ public class TourService {
         dto.setBookingDeadline(tour.getBookingDeadline());
         dto.setCategory(tour.getCategory());
         dto.setStatus(tour.getStatus());
+        dto.setShipName(tour.getShipName());
+        dto.setShipCompany(tour.getShipCompany());
         dto.setIsActive(tour.getIsActive());
         dto.setCreatedAt(tour.getCreatedAt());
         dto.setUpdatedAt(tour.getUpdatedAt());

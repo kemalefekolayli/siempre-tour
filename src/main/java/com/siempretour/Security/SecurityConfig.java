@@ -32,8 +32,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/health").permitAll()
 
-                        // Public tour endpoints
-                        .requestMatchers("/api/tours/published", "/api/tours/active", "/api/tours/{id}").permitAll()
+                        // Public tour endpoints (including filter/search for browsing)
+                        .requestMatchers("/api/tours/published", "/api/tours/active").permitAll()
+                        .requestMatchers("/api/tours/filter", "/api/tours/filter/all", "/api/tours/search").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/{id}").permitAll()
 
                         // User endpoints (authenticated)
                         .requestMatchers("/api/auth/me", "/api/auth/change-password").authenticated()
@@ -41,7 +43,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookings").authenticated()
 
                         // Admin endpoints
-                        .requestMatchers("/api/tours/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/tours").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
+                        .requestMatchers("/api/tours/my-tours").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject").hasRole("ADMIN")
                         .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
