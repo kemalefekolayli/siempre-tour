@@ -1,4 +1,4 @@
-package siempretour.Tours;
+package com.siempretour.Tours;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +14,7 @@ import com.siempretour.Tours.TourRepository;
 import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
 import com.siempretour.User.UserRole;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -42,22 +43,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@AllArgsConstructor
 class TourControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
 
-    @Autowired
-    private TourRepository tourRepository;
+    private final MockMvc mockMvc;
 
-    @Autowired
-    private UserEntityRepository userRepository;
+    private final TourRepository tourRepository;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final UserEntityRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    private final PasswordEncoder passwordEncoder;
 
     private ObjectMapper objectMapper;
     private String adminToken;

@@ -1,15 +1,17 @@
-package siempretour.User;
+package com.siempretour.User;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siempretour.Security.JwtTokenProvider;
 import com.siempretour.User.Dto.*;
 
+import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
+import com.siempretour.User.UserRole;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -20,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,19 +30,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@AllArgsConstructor
 class AuthControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
 
-    @Autowired
-    private UserEntityRepository userRepository;
+    private final MockMvc mockMvc;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final UserEntityRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    private final PasswordEncoder passwordEncoder;
 
     private ObjectMapper objectMapper;
 

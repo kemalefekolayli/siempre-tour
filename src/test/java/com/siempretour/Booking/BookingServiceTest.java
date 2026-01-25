@@ -1,5 +1,9 @@
-package siempretour.Booking;
+package com.siempretour.Booking;
 
+import com.siempretour.Booking.Booking;
+import com.siempretour.Booking.BookingRepository;
+import com.siempretour.Booking.BookingService;
+import com.siempretour.Booking.BookingStatus;
 import com.siempretour.Booking.Dto.BookingApprovalDto;
 import com.siempretour.Booking.Dto.BookingRejectionDto;
 import com.siempretour.Booking.Dto.BookingRequestDto;

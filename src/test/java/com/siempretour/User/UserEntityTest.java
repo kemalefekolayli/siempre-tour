@@ -1,6 +1,7 @@
-package siempretour.User;
+package com.siempretour.User;
 
 import com.siempretour.User.UserEntity;
+import com.siempretour.User.UserRole;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;

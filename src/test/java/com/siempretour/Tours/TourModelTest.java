@@ -1,4 +1,4 @@
-package siempretour.Tours;
+package com.siempretour.Tours;
 
 
 import com.siempretour.Tours.Models.Tour;

@@ -1,9 +1,8 @@
-package siempretour.Booking;
+package com.siempretour.Booking;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.siempretour.Booking.BookingRepository;
 import com.siempretour.Booking.Dto.BookingApprovalDto;
 import com.siempretour.Booking.Dto.BookingRejectionDto;
 import com.siempretour.Booking.Dto.BookingRequestDto;
@@ -15,6 +14,7 @@ import com.siempretour.Security.JwtTokenProvider;
 import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
 import com.siempretour.User.UserRole;
+import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,25 +38,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@AllArgsConstructor
 class BookingControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    private final MockMvc mockMvc;
 
-    @Autowired
-    private BookingRepository bookingRepository;
+    private final BookingRepository bookingRepository;
 
-    @Autowired
-    private TourRepository tourRepository;
+    private final TourRepository tourRepository;
 
-    @Autowired
-    private UserEntityRepository userRepository;
+    private final UserEntityRepository userRepository;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     private ObjectMapper objectMapper;
     private String adminToken;
