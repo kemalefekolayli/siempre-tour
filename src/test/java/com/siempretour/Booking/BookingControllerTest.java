@@ -1,6 +1,5 @@
 package com.siempretour.Booking;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.siempretour.Booking.Dto.BookingApprovalDto;
@@ -14,7 +13,6 @@ import com.siempretour.Security.JwtTokenProvider;
 import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
 import com.siempretour.User.UserRole;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.*;
@@ -38,20 +37,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@AllArgsConstructor
 class BookingControllerTest {
 
-    private final MockMvc mockMvc;
-
-    private final BookingRepository bookingRepository;
-
-    private final TourRepository tourRepository;
-
-    private final UserEntityRepository userRepository;
-
-    private final JwtTokenProvider jwtTokenProvider;
-
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private BookingRepository bookingRepository;
+    @Autowired
+    private TourRepository tourRepository;
+    @Autowired
+    private UserEntityRepository userRepository;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private ObjectMapper objectMapper;
     private String adminToken;
@@ -121,9 +120,9 @@ class BookingControllerTest {
             BookingRequestDto dto = createValidBookingDto();
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").exists())
                     .andExpect(jsonPath("$.tourId").value(bookableTour.getId()))
@@ -140,9 +139,9 @@ class BookingControllerTest {
             BookingRequestDto dto = createValidBookingDto();
 
             mockMvc.perform(post("/api/bookings")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isUnauthorized());
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -152,9 +151,9 @@ class BookingControllerTest {
             dto.setTourId(999999L);
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isNotFound());
         }
 
@@ -169,9 +168,9 @@ class BookingControllerTest {
             dto.setTourId(draftTour.getId());
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -186,9 +185,9 @@ class BookingControllerTest {
             dto.setTourId(inactiveTour.getId());
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -202,9 +201,9 @@ class BookingControllerTest {
             dto.setNumberOfPeople(5);
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -215,9 +214,9 @@ class BookingControllerTest {
             dto.setNumberOfPeople(0);
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -228,9 +227,9 @@ class BookingControllerTest {
             dto.setNumberOfPeople(-1);
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -241,9 +240,9 @@ class BookingControllerTest {
             // Missing all required fields
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -254,9 +253,9 @@ class BookingControllerTest {
             dto.setUserName("");
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -267,9 +266,9 @@ class BookingControllerTest {
             dto.setUserPhone("");
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -280,9 +279,9 @@ class BookingControllerTest {
             dto.setUserMessage("I need a vegetarian meal option");
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated());
         }
 
@@ -295,9 +294,9 @@ class BookingControllerTest {
             BookingRequestDto dto = createValidBookingDto();
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -310,9 +309,9 @@ class BookingControllerTest {
             BookingRequestDto dto = createValidBookingDto();
 
             mockMvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -333,9 +332,9 @@ class BookingControllerTest {
             int initialSeats = bookableTour.getAvailableSeats();
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("APPROVED"))
                     .andExpect(jsonPath("$.approvedBy").value(adminUser.getId()));
@@ -353,10 +352,10 @@ class BookingControllerTest {
             dto.setAdminNote("Approved");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest()); // Returns validation error for non-admin
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden()); // Returns 403 for non-admin
         }
 
         @Test
@@ -370,9 +369,9 @@ class BookingControllerTest {
             dto.setAdminNote("Approved again");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -387,9 +386,9 @@ class BookingControllerTest {
             dto.setAdminNote("Approved");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -407,9 +406,9 @@ class BookingControllerTest {
             dto.setAdminNote("Approved");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -420,9 +419,9 @@ class BookingControllerTest {
             dto.setAdminNote("Approved");
 
             mockMvc.perform(post("/api/bookings/999999/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isConflict()); // RESERVATION_COULD_NOT_BE_CREATED
         }
 
@@ -440,9 +439,9 @@ class BookingControllerTest {
             dto.setAdminNote("Approved");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/approve")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk());
 
             Tour updatedTour = tourRepository.findById(bookableTour.getId()).orElseThrow();
@@ -465,9 +464,9 @@ class BookingControllerTest {
             dto.setRejectionReason("Tour is fully booked with priority guests");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/reject")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REJECTED"))
                     .andExpect(jsonPath("$.rejectedBy").value(adminUser.getId()));
@@ -481,10 +480,10 @@ class BookingControllerTest {
             dto.setRejectionReason("Rejected");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/reject")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest());
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -498,9 +497,9 @@ class BookingControllerTest {
             dto.setRejectionReason("Rejected");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/reject")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -512,9 +511,9 @@ class BookingControllerTest {
             // Missing rejection reason
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/reject")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -526,9 +525,9 @@ class BookingControllerTest {
             dto.setRejectionReason("");
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/reject")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -545,7 +544,7 @@ class BookingControllerTest {
             Booking booking = createPendingBooking();
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/cancel")
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("CANCELLED"));
         }
@@ -556,7 +555,7 @@ class BookingControllerTest {
             Booking booking = createPendingBooking();
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/cancel")
-                            .header("Authorization", "Bearer " + user2Token))
+                    .header("Authorization", "Bearer " + user2Token))
                     .andExpect(status().isBadRequest());
         }
 
@@ -568,7 +567,7 @@ class BookingControllerTest {
             bookingRepository.save(booking);
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/cancel")
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isBadRequest());
         }
 
@@ -580,7 +579,7 @@ class BookingControllerTest {
             bookingRepository.save(booking);
 
             mockMvc.perform(post("/api/bookings/" + booking.getId() + "/cancel")
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -597,7 +596,7 @@ class BookingControllerTest {
             Booking booking = createPendingBooking();
 
             mockMvc.perform(get("/api/bookings/" + booking.getId())
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(booking.getId()));
         }
@@ -608,7 +607,7 @@ class BookingControllerTest {
             Booking booking = createPendingBooking();
 
             mockMvc.perform(get("/api/bookings/" + booking.getId())
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(booking.getId()));
         }
@@ -619,7 +618,7 @@ class BookingControllerTest {
             Booking booking = createPendingBooking();
 
             mockMvc.perform(get("/api/bookings/" + booking.getId())
-                            .header("Authorization", "Bearer " + user2Token))
+                    .header("Authorization", "Bearer " + user2Token))
                     .andExpect(status().isBadRequest());
         }
 
@@ -630,7 +629,7 @@ class BookingControllerTest {
             createPendingBooking();
 
             mockMvc.perform(get("/api/bookings/me")
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(2)))
                     .andExpect(jsonPath("$[*].userId", everyItem(equalTo(regularUser.getId().intValue()))));
@@ -640,7 +639,7 @@ class BookingControllerTest {
         @DisplayName("Should return empty list when user has no bookings")
         void getMyBookings_NoBookings_ShouldReturnEmpty() throws Exception {
             mockMvc.perform(get("/api/bookings/me")
-                            .header("Authorization", "Bearer " + user2Token))
+                    .header("Authorization", "Bearer " + user2Token))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(0)));
         }
@@ -654,7 +653,7 @@ class BookingControllerTest {
             bookingRepository.save(approved);
 
             mockMvc.perform(get("/api/bookings/pending")
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[*].status", everyItem(equalTo("PENDING"))));
         }
@@ -663,8 +662,8 @@ class BookingControllerTest {
         @DisplayName("Should reject pending bookings access by non-admin")
         void getPendingBookings_AsNonAdmin_ShouldBeForbidden() throws Exception {
             mockMvc.perform(get("/api/bookings/pending")
-                            .header("Authorization", "Bearer " + userToken))
-                    .andExpect(status().isBadRequest());
+                    .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -673,7 +672,7 @@ class BookingControllerTest {
             createPendingBooking();
 
             mockMvc.perform(get("/api/bookings/tour/" + bookableTour.getId())
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[*].tourId", everyItem(equalTo(bookableTour.getId().intValue()))));
         }
@@ -682,8 +681,8 @@ class BookingControllerTest {
         @DisplayName("Should reject bookings by tour access by non-admin")
         void getBookingsByTour_AsNonAdmin_ShouldBeForbidden() throws Exception {
             mockMvc.perform(get("/api/bookings/tour/" + bookableTour.getId())
-                            .header("Authorization", "Bearer " + userToken))
-                    .andExpect(status().isBadRequest());
+                    .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -692,7 +691,7 @@ class BookingControllerTest {
             createPendingBooking();
 
             mockMvc.perform(get("/api/bookings")
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$").isArray());
         }
@@ -701,8 +700,8 @@ class BookingControllerTest {
         @DisplayName("Should reject all bookings access by non-admin")
         void getAllBookings_AsNonAdmin_ShouldBeForbidden() throws Exception {
             mockMvc.perform(get("/api/bookings")
-                            .header("Authorization", "Bearer " + userToken))
-                    .andExpect(status().isBadRequest());
+                    .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -731,7 +730,7 @@ class BookingControllerTest {
         tour.setCategory(TourCategory.CULTURAL);
         tour.setStatus(TourStatus.PUBLISHED);
         tour.setIsActive(true);
-        tour.setDestinations(Arrays.asList("Paris", "London"));
+        tour.setDestinations(new ArrayList<>(Arrays.asList("Paris", "London")));
         tour.setDepartureCity("Istanbul");
         tour.setCreatedBy(adminUser.getId());
         return tourRepository.save(tour);

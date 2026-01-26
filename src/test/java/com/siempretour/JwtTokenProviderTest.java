@@ -3,7 +3,6 @@ package com.siempretour;
 import com.siempretour.Security.JwtTokenProvider;
 import com.siempretour.User.UserRole;
 import io.jsonwebtoken.ExpiredJwtException;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -16,11 +15,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@AllArgsConstructor
 class JwtTokenProviderTest {
 
-
-    private final JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     // ==================== TOKEN CREATION TESTS ====================
 

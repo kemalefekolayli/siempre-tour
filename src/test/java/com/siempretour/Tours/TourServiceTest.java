@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -281,7 +282,8 @@ class TourServiceTest {
 
             Page<Tour> tourPage = new PageImpl<>(List.of(sampleTour));
             // Correct argument matchers for the updated service method
-            when(tourRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+            when(tourRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                    any(Pageable.class)))
                     .thenReturn(tourPage);
 
             // Passing all 5 arguments as required by the updated Service
@@ -363,7 +365,7 @@ class TourServiceTest {
         tour.setCategory(TourCategory.CULTURAL);
         tour.setStatus(TourStatus.DRAFT);
         tour.setIsActive(true);
-        tour.setDestinations(Arrays.asList("Paris", "London"));
+        tour.setDestinations(new ArrayList<>(Arrays.asList("Paris", "London")));
         tour.setDepartureCity("Istanbul");
         tour.setCreatedBy(1L);
         return tour;
@@ -373,7 +375,7 @@ class TourServiceTest {
         TourCreateDto dto = new TourCreateDto();
         dto.setName("New Tour");
         dto.setPrice(new BigDecimal("2000"));
-        dto.setDestinations(Arrays.asList("Rome", "Venice"));
+        dto.setDestinations(new ArrayList<>(Arrays.asList("Rome", "Venice")));
         dto.setDepartureCity("Istanbul");
         dto.setDuration(5);
         dto.setMinParticipants(5);

@@ -1,6 +1,5 @@
 package com.siempretour.Tours;
 
-
 import com.siempretour.Filter.PagedResponse;
 import com.siempretour.Tours.Dto.TourCreateDto;
 import com.siempretour.Tours.Dto.TourFilterDto;
@@ -141,6 +140,22 @@ public class TourController {
         filter.setMinDuration(minDuration);
         filter.setMaxDuration(maxDuration);
         filter.setSearchQuery(q);
+
+        PagedResponse<TourResponseDto> response = tourService.filterTours(
+                filter, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
+    }
+
+    // POST endpoint for complex filter operations using request body
+    @PostMapping("/filter")
+    public ResponseEntity<PagedResponse<TourResponseDto>> filterToursPost(
+            @RequestBody TourFilterDto filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+
+        log.info("Filtering tours (POST) with filter - page: {}, size: {}", page, size);
 
         PagedResponse<TourResponseDto> response = tourService.filterTours(
                 filter, page, size, sortBy, sortDirection);

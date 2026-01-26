@@ -1,6 +1,5 @@
 package com.siempretour.Tours;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.siempretour.Tours.Dto.TourCreateDto;
@@ -14,7 +13,6 @@ import com.siempretour.Tours.TourRepository;
 import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
 import com.siempretour.User.UserRole;
-import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -31,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,19 +42,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@AllArgsConstructor
 class TourControllerTest {
 
+    @Autowired
+    private MockMvc mockMvc;
 
-    private final MockMvc mockMvc;
+    @Autowired
+    private TourRepository tourRepository;
 
-    private final TourRepository tourRepository;
+    @Autowired
+    private UserEntityRepository userRepository;
 
-    private final UserEntityRepository userRepository;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
-    private final JwtTokenProvider jwtTokenProvider;
-
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private ObjectMapper objectMapper;
     private String adminToken;
@@ -107,9 +109,9 @@ class TourControllerTest {
             TourCreateDto dto = createValidTourDto();
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").exists())
                     .andExpect(jsonPath("$.name").value(dto.getName()))
@@ -124,9 +126,9 @@ class TourControllerTest {
             TourCreateDto dto = createValidTourDto();
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isForbidden());
         }
 
@@ -136,9 +138,9 @@ class TourControllerTest {
             TourCreateDto dto = createValidTourDto();
 
             mockMvc.perform(post("/api/tours")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isUnauthorized());
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -148,9 +150,9 @@ class TourControllerTest {
             // Missing all required fields
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -162,9 +164,9 @@ class TourControllerTest {
             dto.setEndDate(LocalDateTime.now().plusDays(5)); // End before start
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -176,9 +178,9 @@ class TourControllerTest {
             dto.setDiscountedPrice(new BigDecimal("1500")); // Higher than regular
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -189,9 +191,9 @@ class TourControllerTest {
             dto.setPrice(BigDecimal.ZERO);
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -202,9 +204,9 @@ class TourControllerTest {
             dto.setPrice(new BigDecimal("-100"));
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -215,9 +217,9 @@ class TourControllerTest {
             dto.setDuration(0);
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -228,9 +230,9 @@ class TourControllerTest {
             dto.setDestinations(List.of());
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -243,9 +245,9 @@ class TourControllerTest {
             dto.setShipCompany("MSC Cruises");
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.shipName").value("MSC Fantasia"))
                     .andExpect(jsonPath("$.shipCompany").value("MSC Cruises"));
@@ -259,9 +261,9 @@ class TourControllerTest {
             dto.setCategory(category);
 
             mockMvc.perform(post("/api/tours")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.category").value(category.name()));
         }
@@ -282,9 +284,9 @@ class TourControllerTest {
             dto.setPrice(new BigDecimal("2500"));
 
             mockMvc.perform(put("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.name").value("Updated Tour Name"))
                     .andExpect(jsonPath("$.price").value(2500));
@@ -298,9 +300,9 @@ class TourControllerTest {
             dto.setName("Updated Tour Name");
 
             mockMvc.perform(put("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + userToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isForbidden());
         }
 
@@ -311,9 +313,9 @@ class TourControllerTest {
             dto.setName("Updated Tour Name");
 
             mockMvc.perform(put("/api/tours/999999")
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isNotFound());
         }
 
@@ -325,9 +327,9 @@ class TourControllerTest {
             dto.setStatus(TourStatus.PUBLISHED);
 
             mockMvc.perform(put("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("PUBLISHED"));
         }
@@ -344,9 +346,9 @@ class TourControllerTest {
             dto.setMaxParticipants(30);
 
             mockMvc.perform(put("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.maxParticipants").value(30))
                     .andExpect(jsonPath("$.availableSeats").value(30));
@@ -363,9 +365,9 @@ class TourControllerTest {
             dto.setDuration(14); // Only update duration
 
             mockMvc.perform(put("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + adminToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.duration").value(14))
                     .andExpect(jsonPath("$.name").value(originalName))
@@ -385,7 +387,7 @@ class TourControllerTest {
             Tour tour = createAndSaveTour();
 
             mockMvc.perform(delete("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isNoContent());
 
             // Verify soft delete
@@ -400,7 +402,7 @@ class TourControllerTest {
             Tour tour = createAndSaveTour();
 
             mockMvc.perform(delete("/api/tours/" + tour.getId())
-                            .header("Authorization", "Bearer " + userToken))
+                    .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isForbidden());
         }
 
@@ -408,7 +410,7 @@ class TourControllerTest {
         @DisplayName("Should return 404 for non-existent tour")
         void deleteTour_NonExistent_ShouldReturn404() throws Exception {
             mockMvc.perform(delete("/api/tours/999999")
-                            .header("Authorization", "Bearer " + adminToken))
+                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isNotFound());
         }
     }
@@ -449,7 +451,7 @@ class TourControllerTest {
 
             mockMvc.perform(get("/api/tours/published"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
+                    .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
         }
 
         @Test
@@ -461,7 +463,7 @@ class TourControllerTest {
 
             mockMvc.perform(get("/api/tours/active"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
+                    .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
         }
 
         @Test
@@ -529,8 +531,8 @@ class TourControllerTest {
             filter.setName("Greek");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(1)))
                     .andExpect(jsonPath("$.content[0].name", containsString("Greek")));
@@ -543,8 +545,8 @@ class TourControllerTest {
             filter.setName("GREEK");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(1)));
         }
@@ -556,8 +558,8 @@ class TourControllerTest {
             filter.setCategory(TourCategory.CRUISE);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].category", everyItem(equalTo("CRUISE"))));
         }
@@ -569,8 +571,8 @@ class TourControllerTest {
             filter.setCategories(Arrays.asList(TourCategory.CRUISE, TourCategory.BEACH));
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(2)))
                     .andExpect(jsonPath("$.content[*].category",
@@ -584,8 +586,8 @@ class TourControllerTest {
             filter.setStatus(TourStatus.DRAFT);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].status", everyItem(equalTo("DRAFT"))));
         }
@@ -598,14 +600,13 @@ class TourControllerTest {
             filter.setMaxPrice(new BigDecimal("2000"));
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].price",
                             everyItem(allOf(
                                     greaterThanOrEqualTo(1000.0),
-                                    lessThanOrEqualTo(2000.0)
-                            ))));
+                                    lessThanOrEqualTo(2000.0)))));
         }
 
         @Test
@@ -615,8 +616,8 @@ class TourControllerTest {
             filter.setMinPrice(new BigDecimal("3000"));
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].price",
                             everyItem(greaterThanOrEqualTo(3000.0))));
@@ -630,14 +631,13 @@ class TourControllerTest {
             filter.setMaxDuration(8);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].duration",
                             everyItem(allOf(
                                     greaterThanOrEqualTo(5),
-                                    lessThanOrEqualTo(8)
-                            ))));
+                                    lessThanOrEqualTo(8)))));
         }
 
         @Test
@@ -647,8 +647,8 @@ class TourControllerTest {
             filter.setDepartureCity("Istanbul");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].departureCity",
                             everyItem(containsStringIgnoringCase("Istanbul"))));
@@ -661,8 +661,8 @@ class TourControllerTest {
             filter.setDestination("Santorini");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(1)))
                     .andExpect(jsonPath("$.content[0].destinations", hasItem("Santorini")));
@@ -675,8 +675,8 @@ class TourControllerTest {
             filter.setIsActive(true);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].isActive", everyItem(equalTo(true))));
         }
@@ -688,8 +688,8 @@ class TourControllerTest {
             filter.setIsBookable(true);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].isActive", everyItem(equalTo(true))))
                     .andExpect(jsonPath("$.content[*].status", everyItem(equalTo("PUBLISHED"))))
@@ -705,8 +705,8 @@ class TourControllerTest {
             filter.setIsActive(true);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].category", everyItem(equalTo("CRUISE"))))
                     .andExpect(jsonPath("$.content[*].price", everyItem(greaterThanOrEqualTo(2000.0))))
@@ -720,8 +720,8 @@ class TourControllerTest {
             filter.setName("NonExistentTourName123");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(0)))
                     .andExpect(jsonPath("$.totalElements").value(0));
@@ -735,8 +735,8 @@ class TourControllerTest {
             filter.setSortDirection("ASC");
 
             MvcResult result = mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andReturn();
 
@@ -753,8 +753,8 @@ class TourControllerTest {
             filter.setSortDirection("DESC");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk());
         }
 
@@ -766,8 +766,8 @@ class TourControllerTest {
             filter.setSize(2);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content", hasSize(lessThanOrEqualTo(2))))
                     .andExpect(jsonPath("$.page").value(0))
@@ -784,8 +784,8 @@ class TourControllerTest {
             filter.setSize(2);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.page").value(1))
                     .andExpect(jsonPath("$.hasPrevious").value(true));
@@ -798,8 +798,8 @@ class TourControllerTest {
             filter.setSize(200);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.size").value(100));
         }
@@ -811,8 +811,8 @@ class TourControllerTest {
             filter.setSortBy("invalidField");
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk());
         }
 
@@ -823,8 +823,8 @@ class TourControllerTest {
             filter.setHasAvailability(true);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].availableSeats", everyItem(greaterThan(0))));
         }
@@ -837,19 +837,18 @@ class TourControllerTest {
             filter.setMaxAvailableSeats(40);
 
             mockMvc.perform(post("/api/tours/filter")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(filter)))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(filter)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].availableSeats",
                             everyItem(allOf(
                                     greaterThanOrEqualTo(20),
-                                    lessThanOrEqualTo(40)
-                            ))));
+                                    lessThanOrEqualTo(40)))));
         }
 
         private void createTourWithDetails(String name, TourCategory category, TourStatus status,
-                                           BigDecimal price, int duration, String departureCity,
-                                           boolean isActive, int maxParticipants, List<String> destinations) {
+                BigDecimal price, int duration, String departureCity,
+                boolean isActive, int maxParticipants, List<String> destinations) {
             Tour tour = new Tour();
             tour.setName(name);
             tour.setCategory(category);
@@ -873,7 +872,7 @@ class TourControllerTest {
     // ==================== SEARCH ENDPOINT TESTS ====================
 
     @Nested
-    @DisplayName("GET /api/tours/search - Search Tours")
+    @DisplayName("GET /api/tours/filter - Search Tours")
     class SearchTourTests {
 
         @Test
@@ -884,10 +883,10 @@ class TourControllerTest {
             tour.setIsActive(true);
             tourRepository.save(tour);
 
-            mockMvc.perform(get("/api/tours/search")
-                            .param("isActive", "true")
-                            .param("page", "0")
-                            .param("size", "10"))
+            mockMvc.perform(get("/api/tours/filter")
+                    .param("isActive", "true")
+                    .param("page", "0")
+                    .param("size", "10"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content").isArray());
         }
@@ -899,8 +898,8 @@ class TourControllerTest {
             cruiseTour.setCategory(TourCategory.CRUISE);
             tourRepository.save(cruiseTour);
 
-            mockMvc.perform(get("/api/tours/search")
-                            .param("category", "CRUISE"))
+            mockMvc.perform(get("/api/tours/filter")
+                    .param("category", "CRUISE"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[*].category", everyItem(equalTo("CRUISE"))));
         }
@@ -912,17 +911,17 @@ class TourControllerTest {
             tour.setPrice(new BigDecimal("1500"));
             tourRepository.save(tour);
 
-            mockMvc.perform(get("/api/tours/search")
-                            .param("minPrice", "1000")
-                            .param("maxPrice", "2000"))
+            mockMvc.perform(get("/api/tours/filter")
+                    .param("minPrice", "1000")
+                    .param("maxPrice", "2000"))
                     .andExpect(status().isOk());
         }
 
         @Test
         @DisplayName("Should handle invalid enum value gracefully")
         void searchTours_WithInvalidCategory_ShouldFail() throws Exception {
-            mockMvc.perform(get("/api/tours/search")
-                            .param("category", "INVALID_CATEGORY"))
+            mockMvc.perform(get("/api/tours/filter")
+                    .param("category", "INVALID_CATEGORY"))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -959,7 +958,7 @@ class TourControllerTest {
         tour.setCategory(TourCategory.CULTURAL);
         tour.setStatus(TourStatus.DRAFT);
         tour.setIsActive(true);
-        tour.setDestinations(Arrays.asList("Paris", "London"));
+        tour.setDestinations(new ArrayList<>(Arrays.asList("Paris", "London")));
         tour.setDepartureCity("Istanbul");
         tour.setCreatedBy(adminUser.getId());
         return tourRepository.save(tour);

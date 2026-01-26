@@ -1,6 +1,5 @@
 package com.siempretour.Tours;
 
-
 import com.siempretour.Tours.Models.Tour;
 import com.siempretour.Tours.Models.TourCategory;
 import com.siempretour.Tours.Models.TourStatus;
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -219,7 +219,7 @@ class TourModelTest {
         tour.setCategory(TourCategory.CULTURAL);
         tour.setStatus(TourStatus.PUBLISHED);
         tour.setIsActive(true);
-        tour.setDestinations(Arrays.asList("Paris", "London"));
+        tour.setDestinations(new ArrayList<>(Arrays.asList("Paris", "London")));
         tour.setDepartureCity("Istanbul");
         return tour;
     }
