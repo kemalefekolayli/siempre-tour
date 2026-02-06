@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: siempre-postgres
+    environment:
+      POSTGRES_DB: tourdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tourdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: siempre-app
+    ports:
+      - "8080:8080"
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: tourdb
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      JWT_SECRET: docker-local-dev-secret-key-min-256-bits-long-enough-for-hs256
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -52,6 +52,7 @@ public class TourService {
         tour.setName(dto.getName());
         tour.setPrice(dto.getPrice());
         tour.setDiscountedPrice(dto.getDiscountedPrice());
+        tour.setDestinations(dto.getDestinations());         // BUG FIX: destinations eklendi
         tour.setDepartureCity(dto.getDepartureCity());
         tour.setDuration(dto.getDuration());
         tour.setMinParticipants(dto.getMinParticipants());
@@ -61,6 +62,8 @@ public class TourService {
         tour.setEndDate(dto.getEndDate());
         tour.setBookingDeadline(dto.getBookingDeadline());
         tour.setCategory(dto.getCategory());
+        tour.setShipName(dto.getShipName());                 // BUG FIX: shipName eklendi
+        tour.setShipCompany(dto.getShipCompany());           // BUG FIX: shipCompany eklendi
         tour.setCreatedBy(userId);
 
         Tour savedTour = tourRepository.save(tour);
@@ -95,6 +98,8 @@ public class TourService {
         if (dto.getBookingDeadline() != null) tour.setBookingDeadline(dto.getBookingDeadline());
         if (dto.getCategory() != null) tour.setCategory(dto.getCategory());
         if (dto.getStatus() != null) tour.setStatus(dto.getStatus());
+        if (dto.getShipName() != null) tour.setShipName(dto.getShipName());
+        if (dto.getShipCompany() != null) tour.setShipCompany(dto.getShipCompany());
 
         Tour updatedTour = tourRepository.save(tour);
         log.info("Tour updated with ID: {} by user: {}", tourId, userId);

@@ -37,8 +37,16 @@ public class BookingService {
                 .orElseThrow(() -> new GlobalException(ErrorCodes.AUTH_USER_NOT_FOUND));
         String userEmail = user.getEmail();
 
-        Tour tour = tourRepository.findById(dto.getTourId())
-                .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
+        Tour tour;
+        if (dto.getTourSlug() != null && !dto.getTourSlug().isEmpty()) {
+            tour = tourRepository.findBySlug(dto.getTourSlug())
+                    .orElseGet(() -> createPlaceholderTour(dto.getTourSlug()));
+        } else if (dto.getTourId() != null) {
+            tour = tourRepository.findById(dto.getTourId())
+                    .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
+        } else {
+            throw new GlobalException(ErrorCodes.VALIDATION_ERROR); // Todo: Add specific error code
+        }
 
         // Check if tour is bookable
         if (!tour.isBookable()) {
@@ -65,6 +73,29 @@ public class BookingService {
                 savedBooking.getId(), tour.getId(), userId);
 
         return mapToResponseDto(savedBooking);
+    }
+
+    private Tour createPlaceholderTour(String slug) {
+        log.info("Creating placeholder tour for slug: {}", slug);
+        Tour tour = new Tour();
+        // Format slug to name (e.g. "my-tour" -> "My Tour")
+        String name = slug.replace("-", " ");
+        // Capitalize first letters logic can be added if needed
+        tour.setName(name);
+        tour.setSlug(slug);
+
+        // Set defaults
+        tour.setPrice(java.math.BigDecimal.ZERO);
+        tour.setAvailableSeats(20);
+        tour.setMaxParticipants(20);
+        tour.setDuration(1); // Default 1 day
+        tour.setStartDate(LocalDateTime.now().plusDays(30)); // 30 days from now
+        tour.setEndDate(LocalDateTime.now().plusDays(31));
+        tour.setDepartureCity("Istanbul");
+        tour.setIsActive(true);
+        tour.setStatus(com.siempretour.Tours.Models.TourStatus.PUBLISHED);
+
+        return tourRepository.save(tour);
     }
 
     @Transactional

@@ -19,6 +19,8 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
 
     // ==================== Non-paginated methods (for internal use) ====================
 
+    java.util.Optional<Tour> findBySlug(String slug);
+
     List<Tour> findByIsActiveTrue();
 
     List<Tour> findByStatus(TourStatus status);

@@ -8,8 +8,9 @@ import lombok.Data;
 @Data
 public class BookingRequestDto {
 
-    @NotNull(message = "Tour ID is required")
     private Long tourId;
+
+    private String tourSlug;
 
     @NotNull(message = "Number of people is required")
     @Min(value = 1, message = "At least 1 person required")

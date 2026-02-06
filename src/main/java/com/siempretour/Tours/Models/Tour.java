@@ -25,6 +25,9 @@ public class Tour {
     @Column(nullable = false)
     private String name;
 
+    @Column(unique = true)
+    private String slug;
+
     @ElementCollection
     @CollectionTable(name = "tour_destinations", joinColumns = @JoinColumn(name = "tour_id"))
     @Column(name = "destination")
@@ -37,7 +40,7 @@ public class Tour {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    private TourStatus status;
+    private TourStatus status = TourStatus.DRAFT;
 
     @Column(length = 100)
     private String departureCity; // uçak nerden kalkıyo
