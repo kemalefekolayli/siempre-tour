@@ -17,6 +17,8 @@ public class TourUpdateDto {
     @Size(min = 3, max = 200, message = "Name must be between 3 and 200 characters")
     private String name;
 
+    private String slug;
+
     @Size(max = 500)
     private String shortDescription;
 

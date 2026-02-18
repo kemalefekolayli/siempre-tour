@@ -1,6 +1,5 @@
 package com.siempretour.Tours;
 
-
 import com.siempretour.Exceptions.ErrorCodes;
 import com.siempretour.Exceptions.GlobalException;
 import com.siempretour.Filter.PagedResponse;
@@ -50,9 +49,10 @@ public class TourService {
 
         Tour tour = new Tour();
         tour.setName(dto.getName());
+        tour.setSlug(dto.getSlug());
         tour.setPrice(dto.getPrice());
         tour.setDiscountedPrice(dto.getDiscountedPrice());
-        tour.setDestinations(dto.getDestinations());         // BUG FIX: destinations eklendi
+        tour.setDestinations(dto.getDestinations()); // BUG FIX: destinations eklendi
         tour.setDepartureCity(dto.getDepartureCity());
         tour.setDuration(dto.getDuration());
         tour.setMinParticipants(dto.getMinParticipants());
@@ -62,8 +62,8 @@ public class TourService {
         tour.setEndDate(dto.getEndDate());
         tour.setBookingDeadline(dto.getBookingDeadline());
         tour.setCategory(dto.getCategory());
-        tour.setShipName(dto.getShipName());                 // BUG FIX: shipName eklendi
-        tour.setShipCompany(dto.getShipCompany());           // BUG FIX: shipCompany eklendi
+        tour.setShipName(dto.getShipName()); // BUG FIX: shipName eklendi
+        tour.setShipCompany(dto.getShipCompany()); // BUG FIX: shipCompany eklendi
         tour.setCreatedBy(userId);
 
         Tour savedTour = tourRepository.save(tour);
@@ -80,26 +80,42 @@ public class TourService {
                 .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
 
         // Update only non-null fields
-        if (dto.getName() != null) tour.setName(dto.getName());
-        if (dto.getPrice() != null) tour.setPrice(dto.getPrice());
-        if (dto.getDiscountedPrice() != null) tour.setDiscountedPrice(dto.getDiscountedPrice());
-        if (dto.getDestinations() != null) tour.setDestinations(dto.getDestinations());
-        if (dto.getDepartureCity() != null) tour.setDepartureCity(dto.getDepartureCity());
-        if (dto.getDuration() != null) tour.setDuration(dto.getDuration());
-        if (dto.getMinParticipants() != null) tour.setMinParticipants(dto.getMinParticipants());
+        if (dto.getName() != null)
+            tour.setName(dto.getName());
+        if (dto.getSlug() != null)
+            tour.setSlug(dto.getSlug());
+        if (dto.getPrice() != null)
+            tour.setPrice(dto.getPrice());
+        if (dto.getDiscountedPrice() != null)
+            tour.setDiscountedPrice(dto.getDiscountedPrice());
+        if (dto.getDestinations() != null)
+            tour.setDestinations(dto.getDestinations());
+        if (dto.getDepartureCity() != null)
+            tour.setDepartureCity(dto.getDepartureCity());
+        if (dto.getDuration() != null)
+            tour.setDuration(dto.getDuration());
+        if (dto.getMinParticipants() != null)
+            tour.setMinParticipants(dto.getMinParticipants());
         if (dto.getMaxParticipants() != null) {
             tour.setMaxParticipants(dto.getMaxParticipants());
             if (tour.getAvailableSeats() > dto.getMaxParticipants()) {
                 tour.setAvailableSeats(dto.getMaxParticipants());
             }
         }
-        if (dto.getStartDate() != null) tour.setStartDate(dto.getStartDate());
-        if (dto.getEndDate() != null) tour.setEndDate(dto.getEndDate());
-        if (dto.getBookingDeadline() != null) tour.setBookingDeadline(dto.getBookingDeadline());
-        if (dto.getCategory() != null) tour.setCategory(dto.getCategory());
-        if (dto.getStatus() != null) tour.setStatus(dto.getStatus());
-        if (dto.getShipName() != null) tour.setShipName(dto.getShipName());
-        if (dto.getShipCompany() != null) tour.setShipCompany(dto.getShipCompany());
+        if (dto.getStartDate() != null)
+            tour.setStartDate(dto.getStartDate());
+        if (dto.getEndDate() != null)
+            tour.setEndDate(dto.getEndDate());
+        if (dto.getBookingDeadline() != null)
+            tour.setBookingDeadline(dto.getBookingDeadline());
+        if (dto.getCategory() != null)
+            tour.setCategory(dto.getCategory());
+        if (dto.getStatus() != null)
+            tour.setStatus(dto.getStatus());
+        if (dto.getShipName() != null)
+            tour.setShipName(dto.getShipName());
+        if (dto.getShipCompany() != null)
+            tour.setShipCompany(dto.getShipCompany());
 
         Tour updatedTour = tourRepository.save(tour);
         log.info("Tour updated with ID: {} by user: {}", tourId, userId);
@@ -148,8 +164,7 @@ public class TourService {
         Page<Tour> tourPage = tourRepository.findByIsActiveTrueAndStatusAndStartDateAfter(
                 TourStatus.PUBLISHED,
                 LocalDateTime.now(),
-                pageable
-        );
+                pageable);
         return mapToPagedResponse(tourPage);
     }
 
@@ -161,7 +176,7 @@ public class TourService {
     }
 
     public PagedResponse<TourResponseDto> filterTours(TourFilterDto filter, int page, int size,
-                                                      String sortBy, String sortDirection) {
+            String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
 
         Page<Tour> tourPage = tourRepository.findWithFilters(
@@ -175,13 +190,13 @@ public class TourService {
                 filter.getMinDuration(),
                 filter.getMaxDuration(),
                 filter.getSearchQuery(),
-                pageable
-        );
+                pageable);
 
         return mapToPagedResponse(tourPage);
     }
 
-    // ==================== Non-Paginated Methods (backwards compatibility) ====================
+    // ==================== Non-Paginated Methods (backwards compatibility)
+    // ====================
 
     public List<TourResponseDto> getAllToursNonPaged() {
         return tourRepository.findAll().stream()
@@ -197,9 +212,8 @@ public class TourService {
 
     public List<TourResponseDto> getPublishedToursNonPaged() {
         return tourRepository.findByIsActiveTrueAndStatusAndStartDateAfter(
-                        TourStatus.PUBLISHED,
-                        LocalDateTime.now()
-                ).stream()
+                TourStatus.PUBLISHED,
+                LocalDateTime.now()).stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -245,6 +259,7 @@ public class TourService {
         TourResponseDto dto = new TourResponseDto();
         dto.setId(tour.getId());
         dto.setName(tour.getName());
+        dto.setSlug(tour.getSlug());
         dto.setDestinations(tour.getDestinations());
         dto.setPrice(tour.getPrice());
         dto.setDiscountedPrice(tour.getDiscountedPrice());

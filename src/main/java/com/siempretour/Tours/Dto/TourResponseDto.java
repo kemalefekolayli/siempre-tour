@@ -13,6 +13,7 @@ import java.util.List;
 public class TourResponseDto {
     private Long id;
     private String name;
+    private String slug;
     private BigDecimal price;
     private BigDecimal discountedPrice;
     private List<String> destinations;

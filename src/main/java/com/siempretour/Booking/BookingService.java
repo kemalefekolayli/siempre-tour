@@ -40,7 +40,7 @@ public class BookingService {
         Tour tour;
         if (dto.getTourSlug() != null && !dto.getTourSlug().isEmpty()) {
             tour = tourRepository.findBySlug(dto.getTourSlug())
-                    .orElseGet(() -> createPlaceholderTour(dto.getTourSlug()));
+                    .orElseGet(() -> createPlaceholderTour(dto));
         } else if (dto.getTourId() != null) {
             tour = tourRepository.findById(dto.getTourId())
                     .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
@@ -75,22 +75,55 @@ public class BookingService {
         return mapToResponseDto(savedBooking);
     }
 
-    private Tour createPlaceholderTour(String slug) {
+    private Tour createPlaceholderTour(BookingRequestDto dto) {
+        String slug = dto.getTourSlug();
         log.info("Creating placeholder tour for slug: {}", slug);
         Tour tour = new Tour();
-        // Format slug to name (e.g. "my-tour" -> "My Tour")
-        String name = slug.replace("-", " ");
-        // Capitalize first letters logic can be added if needed
+
+        // Use supplied name or fallback
+        String name = (dto.getTourName() != null && !dto.getTourName().isEmpty())
+                ? dto.getTourName()
+                : slug.replace("-", " ");
+
         tour.setName(name);
         tour.setSlug(slug);
 
+        // Map optional fields
+        if (dto.getTourDestination() != null && !dto.getTourDestination().isEmpty()) {
+            tour.getDestinations().add(dto.getTourDestination());
+        }
+
+        if (dto.getTourPrice() != null) {
+            tour.setPrice(dto.getTourPrice());
+        } else {
+            tour.setPrice(java.math.BigDecimal.ZERO);
+        }
+
+        if (dto.getTourDuration() != null) {
+            tour.setDuration(dto.getTourDuration());
+        } else {
+            tour.setDuration(1);
+        }
+
+        // Category mapping
+        if (dto.getTourCategory() != null) {
+            try {
+                // Try to match enum
+                tour.setCategory(
+                        com.siempretour.Tours.Models.TourCategory.valueOf(dto.getTourCategory().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // Fallback or ignore
+                tour.setCategory(com.siempretour.Tours.Models.TourCategory.OTHER);
+            }
+        } else {
+            tour.setCategory(com.siempretour.Tours.Models.TourCategory.OTHER);
+        }
+
         // Set defaults
-        tour.setPrice(java.math.BigDecimal.ZERO);
         tour.setAvailableSeats(20);
         tour.setMaxParticipants(20);
-        tour.setDuration(1); // Default 1 day
         tour.setStartDate(LocalDateTime.now().plusDays(30)); // 30 days from now
-        tour.setEndDate(LocalDateTime.now().plusDays(31));
+        tour.setEndDate(LocalDateTime.now().plusDays(30).plusDays(tour.getDuration()));
         tour.setDepartureCity("Istanbul");
         tour.setIsActive(true);
         tour.setStatus(com.siempretour.Tours.Models.TourStatus.PUBLISHED);

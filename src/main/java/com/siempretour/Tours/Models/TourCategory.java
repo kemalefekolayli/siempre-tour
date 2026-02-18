@@ -10,6 +10,7 @@ public enum TourCategory {
     CITY_TOUR,
     SAFARI,
     CRUISE,
+    SHIP,
     RELIGIOUS,
     SKIING,
     OTHER
