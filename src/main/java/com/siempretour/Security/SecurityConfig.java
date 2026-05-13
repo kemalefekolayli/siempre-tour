@@ -36,6 +36,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/tours/published", "/api/tours/active").permitAll()
                         .requestMatchers("/api/tours/filter", "/api/tours/filter/all", "/api/tours/search").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/{id}").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/by-destination").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/by-destination/paged").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/by-slug/**").permitAll()
+
+                        // Public review endpoints
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/by-tour/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/by-destination").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews").permitAll()
+
+                        // Contact form (public)
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
 
                         // User endpoints (authenticated)
                         .requestMatchers("/api/auth/me", "/api/auth/change-password").authenticated()
@@ -43,12 +54,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookings").authenticated()
 
                         // Admin endpoints
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/tours/bulk-import").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/tours").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers("/api/tours/my-tours").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/pending").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/reviews/{id}/approve", "/api/reviews/{id}/reject").hasRole("ADMIN")
                         .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()

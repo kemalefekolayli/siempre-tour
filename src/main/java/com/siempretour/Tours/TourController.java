@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -54,6 +55,42 @@ public class TourController {
     @GetMapping("/{tourId}")
     public ResponseEntity<TourResponseDto> getTourById(@PathVariable Long tourId) {
         TourResponseDto response = tourService.getTourById(tourId);
+        return ResponseEntity.ok(response);
+    }
+
+    // ==================== Destination & Slug Endpoints ====================
+
+    @GetMapping("/by-destination")
+    public ResponseEntity<List<TourResponseDto>> getToursByDestination(
+            @RequestParam String destination,
+            @RequestParam(defaultValue = "tr") String lang,
+            @RequestParam(required = false) String category) {
+        log.info("Getting tours for destination: {} lang: {} category: {}", destination, lang, category);
+        List<TourResponseDto> response = tourService.getToursByDestination(destination, lang, category);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/by-destination/paged")
+    public ResponseEntity<PagedResponse<TourResponseDto>> getToursByDestinationPaged(
+            @RequestParam String destination,
+            @RequestParam(defaultValue = "tr") String lang,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        log.info("Getting paged tours for destination: {} lang: {} category: {}", destination, lang, category);
+        PagedResponse<TourResponseDto> response = tourService.getToursByDestination(
+                destination, lang, category, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/by-slug/{slug}")
+    public ResponseEntity<TourResponseDto> getTourBySlug(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "tr") String lang) {
+        log.info("Getting tour by slug: {} lang: {}", slug, lang);
+        TourResponseDto response = tourService.getTourBySlug(slug, lang);
         return ResponseEntity.ok(response);
     }
 
@@ -120,14 +157,16 @@ public class TourController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTo,
             @RequestParam(required = false) Integer minDuration,
             @RequestParam(required = false) Integer maxDuration,
-            @RequestParam(required = false) String q, // search query for tour name
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false) String destination,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        log.info("Filtering tours with params - status: {}, category: {}, page: {}, size: {}",
-                status, category, page, size);
+        log.info("Filtering tours with params - status: {}, category: {}, lang: {}, destination: {}, page: {}, size: {}",
+                status, category, lang, destination, page, size);
 
         TourFilterDto filter = new TourFilterDto();
         filter.setStatus(status);
@@ -140,13 +179,14 @@ public class TourController {
         filter.setMinDuration(minDuration);
         filter.setMaxDuration(maxDuration);
         filter.setSearchQuery(q);
+        filter.setLanguage(lang);
+        filter.setDestination(destination);
 
         PagedResponse<TourResponseDto> response = tourService.filterTours(
                 filter, page, size, sortBy, sortDirection);
         return ResponseEntity.ok(response);
     }
 
-    // POST endpoint for complex filter operations using request body
     @PostMapping("/filter")
     public ResponseEntity<PagedResponse<TourResponseDto>> filterToursPost(
             @RequestBody TourFilterDto filter,
@@ -160,5 +200,15 @@ public class TourController {
         PagedResponse<TourResponseDto> response = tourService.filterTours(
                 filter, page, size, sortBy, sortDirection);
         return ResponseEntity.ok(response);
+    }
+
+    // ==================== Bulk Import ====================
+
+    @PostMapping("/bulk-import")
+    public ResponseEntity<List<TourResponseDto>> bulkImportTours(
+            @RequestBody List<@Valid TourCreateDto> tours) {
+        log.info("Bulk importing {} tours", tours.size());
+        List<TourResponseDto> response = tourService.bulkImportTours(tours);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

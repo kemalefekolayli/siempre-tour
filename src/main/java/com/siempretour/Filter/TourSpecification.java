@@ -17,6 +17,21 @@ public class TourSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // Default: only active tours
+            if (filter.getIsActive() == null) {
+                predicates.add(cb.equal(root.get("isActive"), true));
+            }
+
+            // Language filter
+            if (filter.getLanguage() != null && !filter.getLanguage().isBlank()) {
+                predicates.add(cb.equal(root.get("language"), filter.getLanguage()));
+            }
+
+            // Simple destination match (exact match on the destination field)
+            if (filter.getDestination() != null && !filter.getDestination().isBlank()) {
+                predicates.add(cb.equal(root.get("destination"), filter.getDestination()));
+            }
+
             // Text search - name (case-insensitive partial match)
             if (filter.getName() != null && !filter.getName().isBlank()) {
                 predicates.add(cb.like(
@@ -33,17 +48,8 @@ public class TourSpecification {
                 ));
             }
 
-            // Search within destinations list
-            if (filter.getDestination() != null && !filter.getDestination().isBlank()) {
-                // Join with destinations collection
-                Join<Tour, String> destinationsJoin = root.join("destinations", JoinType.LEFT);
-                predicates.add(cb.like(
-                        cb.lower(destinationsJoin),
-                        "%" + filter.getDestination().toLowerCase() + "%"
-                ));
-                // Make query distinct to avoid duplicates from join
-                query.distinct(true);
-            }
+            // Search within destinations collection (multi-destination tours)
+            // Note: simple destination matching is handled above via the 'destination' field
 
             // Single category filter
             if (filter.getCategory() != null) {

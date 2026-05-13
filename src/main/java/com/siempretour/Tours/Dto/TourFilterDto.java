@@ -64,4 +64,7 @@ public class TourFilterDto {
     private Integer size;                   // Page size (default: 10)
 
     private String searchQuery; // Search by tour name
+
+    // Language filter
+    private String language; // "tr" or "en"
 }

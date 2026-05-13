@@ -1,7 +1,7 @@
 package com.siempretour.Tours.Models;
 
 
-
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -25,8 +25,72 @@ public class Tour {
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column(unique = false) // slug + language combo is unique, not slug alone
     private String slug;
+
+    // ==================== Language & Destination ====================
+
+    @Column(nullable = false, length = 5)
+    private String language = "tr"; // "tr" or "en"
+
+    @Column(length = 200)
+    private String destination; // Country name, e eoggy "Albania", "Japan"
+
+    // ==================== Content Fields (from frontend JSON) ====================
+
+    @Column(columnDefinition = "TEXT")
+    private String generalInfo; // HTML description
+
+    @Column(columnDefinition = "TEXT")
+    private String placesVisited; // Places summary text
+
+    @Column(columnDefinition = "TEXT")
+    private String whatExpect; // Nullable, future use
+
+    // ==================== Image Fields ====================
+
+    @Column(length = 500)
+    private String mainPhoto;
+
+    @Column(length = 500)
+    private String image1;
+
+    @Column(length = 500)
+    private String image2;
+
+    @Column(length = 500)
+    private String image3;
+
+    @Column(length = 500)
+    private String image4;
+
+    @Column(length = 500)
+    private String image5;
+
+    @Column(length = 500)
+    private String image6;
+
+    @Column(length = 500)
+    private String imagealt;
+
+    // ==================== Nullable Future-Use Fields ====================
+
+    @Column(length = 100)
+    private String personNumber;
+
+    @Column(length = 255)
+    private String dates;
+
+    @Column(length = 50)
+    private String minimumAge;
+
+    @Column(length = 500)
+    private String meet;
+
+    @Column(columnDefinition = "TEXT")
+    private String map;
+
+    // ==================== Existing Fields ====================
 
     @ElementCollection
     @CollectionTable(name = "tour_destinations", joinColumns = @JoinColumn(name = "tour_id"))
@@ -43,19 +107,15 @@ public class Tour {
     private TourStatus status = TourStatus.DRAFT;
 
     @Column(length = 100)
-    private String departureCity; // uçak nerden kalkıyo
+    private String departureCity;
 
-    @NotNull
     @Min(value = 1)
     private Integer duration;
 
-    @Column(nullable = false)
     private LocalDateTime startDate;
 
-    @Column(nullable = false)
     private LocalDateTime endDate;
 
-    @Column(nullable = true)
     private LocalDateTime bookingDeadline;
 
     @Column(nullable = false, updatable = false)
@@ -70,28 +130,44 @@ public class Tour {
     @Min(value = 1)
     private Integer maxParticipants;
 
-    @Column(nullable = false)
     private Integer availableSeats;
 
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = true)
     private Long createdBy;
 
-    @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", inclusive = false)
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal price;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal discountedPrice;
 
     @Column(length = 100)
-    private String shipName;     // Sadece CRUISE ise dolu olacak
+    private String shipName;
 
     @Column(length = 100)
     private String shipCompany;
+
+    // ==================== Relationships ====================
+
+    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("dayNumber ASC")
+    @JsonManagedReference
+    private List<TourDay> dayInfo = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "tour_routes", joinColumns = @JoinColumn(name = "tour_id"))
+    @OrderColumn(name = "route_order")
+    private List<TourRouteStop> route = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "tour_route_coordinates", joinColumns = @JoinColumn(name = "tour_id"))
+    @OrderColumn(name = "coord_order")
+    private List<TourRouteCoordinate> routeCoordinates = new ArrayList<>();
+
+    // ==================== Lifecycle Hooks ====================
 
     @PrePersist
     public void onCreate() {
@@ -107,22 +183,36 @@ public class Tour {
         updatedAt = LocalDateTime.now();
     }
 
+    // ==================== Business Logic ====================
+
     public boolean isBookable() {
         return isActive &&
                 status == TourStatus.PUBLISHED &&
+                availableSeats != null &&
                 availableSeats > 0 &&
-                LocalDateTime.now().isBefore(bookingDeadline != null ? bookingDeadline : startDate);
+                LocalDateTime.now().isBefore(bookingDeadline != null ? bookingDeadline : (startDate != null ? startDate : LocalDateTime.MAX));
     }
 
     public void decrementAvailableSeats(int count) {
-        if (availableSeats >= count) {
+        if (availableSeats != null && availableSeats >= count) {
             availableSeats -= count;
-            // Eğer koltuk kalmadıysa, status'u SOLD_OUT yap
             if (availableSeats == 0) {
                 status = TourStatus.SOLD_OUT;
             }
         } else {
             throw new IllegalStateException("Not enough available seats");
+        }
+    }
+
+    // ==================== Helper for TourDay management ====================
+
+    public void setDayInfoFromList(List<TourDay> days) {
+        this.dayInfo.clear();
+        if (days != null) {
+            for (TourDay day : days) {
+                day.setTour(this);
+                this.dayInfo.add(day);
+            }
         }
     }
 }

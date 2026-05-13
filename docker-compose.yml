@@ -30,6 +30,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
       JWT_SECRET: docker-local-dev-secret-key-min-256-bits-long-enough-for-hs256
+      RATE_LIMIT_ENABLED: false
     depends_on:
       postgres:
         condition: service_healthy
