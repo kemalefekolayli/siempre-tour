@@ -4,6 +4,7 @@ package com.siempretour.Tours.Dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import com.siempretour.Tours.Models.TourCategory;
+import com.siempretour.Tours.Models.TourStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -74,6 +75,9 @@ public class TourCreateDto {
     private String shipCompany;
 
     private TourCategory category;
+    private TourStatus status;
+    private Boolean isActive;
+    private String eventType;
 
     // Day-by-day itinerary
     private List<TourDayDto> dayInfo;

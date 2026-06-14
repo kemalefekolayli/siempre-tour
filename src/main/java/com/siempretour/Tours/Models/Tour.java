@@ -104,6 +104,10 @@ public class Tour {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
+    private TourEventType eventType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private TourStatus status = TourStatus.DRAFT;
 
     @Column(length = 100)

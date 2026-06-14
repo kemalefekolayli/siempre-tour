@@ -117,11 +117,18 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- H2 Database for Testing -->
+        <!-- H2 Database — runtime scope so it's available for the `dev` profile in prod containers -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Cloudinary image storage/CDN -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.39.0</version>
         </dependency>
     </dependencies>
 

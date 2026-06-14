@@ -75,6 +75,8 @@ public class TourUpdateDto {
 
     private TourCategory category;
     private TourStatus status;
+    private Boolean isActive;
+    private String eventType;
 
     // Relationships
     private List<TourDayDto> dayInfo;

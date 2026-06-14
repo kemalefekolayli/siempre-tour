@@ -79,6 +79,17 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<BookingResponseDto>> getAllBookings() {
+        // Admin-only at the security layer (see SecurityConfig: GET /api/bookings -> hasRole("ADMIN")).
+        // The service also enforces the ADMIN role as defense in depth.
+        List<BookingResponseDto> bookings = bookingService.getAllBookings();
+        return ResponseEntity.ok(bookings);
+    }
+
+    // Admin-only alias documented in admin_panel.md. Without this explicit handler the
+    // path "/all" would fall through to GET /{bookingId}, which tries to parse "all"
+    // as a Long and 500s with NumberFormatException.
+    @GetMapping("/all")
+    public ResponseEntity<List<BookingResponseDto>> getAllBookingsAdmin() {
         List<BookingResponseDto> bookings = bookingService.getAllBookings();
         return ResponseEntity.ok(bookings);
     }

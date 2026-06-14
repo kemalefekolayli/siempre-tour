@@ -1,6 +1,7 @@
 package com.siempretour.Tours.Dto;
 
 
+import com.siempretour.Tours.Models.TourEventType;
 import com.siempretour.Tours.Models.TourStatus;
 import lombok.Data;
 
@@ -68,4 +69,8 @@ public class TourResponseDto {
     // Frontend-compatible aliases
     private String tourName;      // alias for name
     private String durationDays;  // alias for duration (as string)
+
+    // Event type
+    private TourEventType eventType;
+    private String eventTypeDisplay; // display name of eventType
 }

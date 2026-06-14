@@ -31,6 +31,9 @@ services:
       PGPASSWORD: postgres
       JWT_SECRET: docker-local-dev-secret-key-min-256-bits-long-enough-for-hs256
       RATE_LIMIT_ENABLED: false
+      ADMIN_UPLOAD_DIR: /app/uploads/tours
+    volumes:
+      - ./uploads/tours:/app/uploads/tours
     depends_on:
       postgres:
         condition: service_healthy

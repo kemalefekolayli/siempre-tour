@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers("/actuator/health", "/health").permitAll()
+                        .requestMatchers("/actuator/health", "/health", "/uploads/**").permitAll()
 
                         // Public tour endpoints (including filter/search for browsing)
                         .requestMatchers("/api/tours/published", "/api/tours/active").permitAll()
@@ -48,19 +48,27 @@ public class SecurityConfig {
                         // Contact form (public)
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
 
+                        // Admin-only booking endpoints (must precede the broader authenticated rules
+                        // so that GET /api/bookings (list-all) is locked down to admins. The exact-match
+                        // pattern "/api/bookings" only catches the root collection; nested user routes
+                        // like /api/bookings/me and /api/bookings/{id} are handled below.)
+                        .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**").hasRole("ADMIN")
+                        .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings").hasRole("ADMIN")
+
                         // User endpoints (authenticated)
                         .requestMatchers("/api/auth/me", "/api/auth/change-password").authenticated()
-                        .requestMatchers("/api/bookings/my-bookings", "/api/bookings/{id}").authenticated()
-                        .requestMatchers("/api/bookings").authenticated()
+                        .requestMatchers("/api/bookings/my-bookings", "/api/bookings/me", "/api/bookings/{id}").authenticated()
+                        // POST /api/bookings (create a booking) requires a logged-in user, not admin.
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/bookings").authenticated()
 
                         // Admin endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/tours/bulk-import").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/tours").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers("/api/tours/my-tours").hasRole("ADMIN")
-                        .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**").hasRole("ADMIN")
-                        .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/pending").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/reviews/{id}/approve", "/api/reviews/{id}/reject").hasRole("ADMIN")
                         .requestMatchers("/api/auth/users/**").hasRole("ADMIN")

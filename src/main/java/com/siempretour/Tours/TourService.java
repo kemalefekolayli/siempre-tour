@@ -109,8 +109,13 @@ public class TourService {
         if (dto.getBookingDeadline() != null) tour.setBookingDeadline(dto.getBookingDeadline());
         if (dto.getCategory() != null) tour.setCategory(dto.getCategory());
         if (dto.getStatus() != null) tour.setStatus(dto.getStatus());
+        if (dto.getIsActive() != null) tour.setIsActive(dto.getIsActive());
         if (dto.getShipName() != null) tour.setShipName(dto.getShipName());
         if (dto.getShipCompany() != null) tour.setShipCompany(dto.getShipCompany());
+        if (dto.getEventType() != null && !dto.getEventType().isEmpty()) {
+            TourEventType et = TourEventType.fromString(dto.getEventType());
+            if (et != null) tour.setEventType(et);
+        }
 
         // Update day info
         if (dto.getDayInfo() != null) {
@@ -170,7 +175,7 @@ public class TourService {
     }
 
     public TourResponseDto getTourBySlug(String slug, String language) {
-        Tour tour = tourRepository.findBySlugAndLanguage(slug, language)
+        Tour tour = tourRepository.findBySlugAndLanguageAndIsActiveTrue(slug, language)
                 .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_COULD_NOT_BE_FOUND));
         return mapToResponseDto(tour);
     }
@@ -181,9 +186,9 @@ public class TourService {
         List<Tour> tours;
         if (category != null && !category.isEmpty()) {
             TourCategory tourCategory = TourCategory.fromString(category);
-            tours = tourRepository.findByDestinationAndLanguageAndCategory(destination, language, tourCategory);
+            tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguageAndCategory(destination, language, tourCategory);
         } else {
-            tours = tourRepository.findByDestinationAndLanguage(destination, language);
+            tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguage(destination, language);
         }
         return tours.stream()
                 .map(this::mapToResponseDto)
@@ -197,10 +202,10 @@ public class TourService {
         Page<Tour> tourPage;
         if (category != null && !category.isEmpty()) {
             TourCategory tourCategory = TourCategory.fromString(category);
-            tourPage = tourRepository.findByDestinationAndLanguageAndCategory(
+            tourPage = tourRepository.findByIsActiveTrueAndDestinationAndLanguageAndCategory(
                     destination, language, tourCategory, pageable);
         } else {
-            tourPage = tourRepository.findByDestinationAndLanguage(destination, language, pageable);
+            tourPage = tourRepository.findByIsActiveTrueAndDestinationAndLanguage(destination, language, pageable);
         }
 
         return mapToPagedResponse(tourPage);
@@ -328,8 +333,17 @@ public class TourService {
         tour.setEndDate(dto.getEndDate());
         tour.setBookingDeadline(dto.getBookingDeadline());
         tour.setCategory(dto.getCategory());
+        if (dto.getStatus() != null) {
+            tour.setStatus(dto.getStatus());
+        }
+        if (dto.getIsActive() != null) {
+            tour.setIsActive(dto.getIsActive());
+        }
         tour.setShipName(dto.getShipName());
         tour.setShipCompany(dto.getShipCompany());
+        if (dto.getEventType() != null && !dto.getEventType().isEmpty()) {
+            tour.setEventType(TourEventType.fromString(dto.getEventType()));
+        }
 
         // Day info
         if (dto.getDayInfo() != null) {
@@ -431,6 +445,10 @@ public class TourService {
         // Frontend-compatible aliases
         dto.setTourName(tour.getName());
         dto.setDurationDays(tour.getDuration() != null ? String.valueOf(tour.getDuration()) : null);
+
+        // Event type
+        dto.setEventType(tour.getEventType());
+        dto.setEventTypeDisplay(tour.getEventType() != null ? tour.getEventType().getDisplayName() : null);
 
         // Day info
         if (tour.getDayInfo() != null) {

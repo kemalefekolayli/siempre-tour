@@ -2,6 +2,7 @@ package com.siempretour.Tours.Dto;
 
 
 import com.siempretour.Tours.Models.TourCategory;
+import com.siempretour.Tours.Models.TourEventType;
 import com.siempretour.Tours.Models.TourStatus;
 import lombok.Data;
 
@@ -53,6 +54,7 @@ public class TourFilterDto {
 
     // Status flags
     private Boolean isActive;
+    private Boolean includeInactive;           // Admin-only: include active and inactive tours when true
     private Boolean isBookable;             // Custom: active, published, has seats, before deadline
 
     // Sorting
@@ -67,4 +69,7 @@ public class TourFilterDto {
 
     // Language filter
     private String language; // "tr" or "en"
+
+    // Event type filter
+    private TourEventType eventType;
 }

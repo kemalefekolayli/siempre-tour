@@ -3,6 +3,7 @@ package com.siempretour.Filter;
 
 import com.siempretour.Tours.Dto.TourFilterDto;
 import com.siempretour.Tours.Models.Tour;
+import com.siempretour.Tours.Models.TourEventType;
 import com.siempretour.Tours.Models.TourStatus;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,7 +19,7 @@ public class TourSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             // Default: only active tours
-            if (filter.getIsActive() == null) {
+            if (filter.getIsActive() == null && !Boolean.TRUE.equals(filter.getIncludeInactive())) {
                 predicates.add(cb.equal(root.get("isActive"), true));
             }
 
@@ -169,6 +170,11 @@ public class TourSpecification {
                                 cb.greaterThan(root.get("startDate"), now)
                         )
                 ));
+            }
+
+            // Event type filter
+            if (filter.getEventType() != null) {
+                predicates.add(cb.equal(root.get("eventType"), filter.getEventType()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

@@ -19,11 +19,11 @@ import java.util.Optional;
 @Repository
 public interface TourRepository extends JpaRepository<Tour, Long>, JpaSpecificationExecutor<Tour> {
 
-    // ==================== Non-paginated methods ====================
-
     Optional<Tour> findBySlug(String slug);
 
     Optional<Tour> findBySlugAndLanguage(String slug, String language);
+
+    Optional<Tour> findBySlugAndLanguageAndIsActiveTrue(String slug, String language);
 
     List<Tour> findByIsActiveTrue();
 
@@ -40,9 +40,11 @@ public interface TourRepository extends JpaRepository<Tour, Long>, JpaSpecificat
 
     List<Tour> findByDestinationAndLanguage(String destination, String language);
 
+    List<Tour> findByIsActiveTrueAndDestinationAndLanguage(String destination, String language);
+
     List<Tour> findByDestinationAndLanguageAndCategory(String destination, String language, TourCategory category);
 
-    // ==================== Paginated methods ====================
+    List<Tour> findByIsActiveTrueAndDestinationAndLanguageAndCategory(String destination, String language, TourCategory category);
 
     Page<Tour> findByIsActiveTrue(Pageable pageable);
 
@@ -57,24 +59,27 @@ public interface TourRepository extends JpaRepository<Tour, Long>, JpaSpecificat
 
     Page<Tour> findByDestinationAndLanguage(String destination, String language, Pageable pageable);
 
+    Page<Tour> findByIsActiveTrueAndDestinationAndLanguage(String destination, String language, Pageable pageable);
+
     Page<Tour> findByDestinationAndLanguageAndCategory(
             String destination, String language, TourCategory category, Pageable pageable);
 
-    // ==================== Advanced filtering with pagination ====================
+    Page<Tour> findByIsActiveTrueAndDestinationAndLanguageAndCategory(
+            String destination, String language, TourCategory category, Pageable pageable);
 
     @Query("SELECT t FROM Tour t WHERE t.isActive = true " +
-            "AND (:status IS NULL OR t.status = :status) " +
-            "AND (:category IS NULL OR t.category = :category) " +
-            "AND (:minPrice IS NULL OR t.price >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR t.price <= :maxPrice) " +
-            "AND (:departureCity IS NULL OR LOWER(t.departureCity) LIKE LOWER(CONCAT('%', :departureCity, '%'))) " +
-            "AND (:startDateFrom IS NULL OR t.startDate >= :startDateFrom) " +
-            "AND (:startDateTo IS NULL OR t.startDate <= :startDateTo) " +
-            "AND (:minDuration IS NULL OR t.duration >= :minDuration) " +
-            "AND (:maxDuration IS NULL OR t.duration <= :maxDuration) " +
-            "AND (:searchQuery IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', :searchQuery, '%'))) " +
-            "AND (:language IS NULL OR t.language = :language) " +
-            "AND (:destination IS NULL OR t.destination = :destination)")
+            "AND (CAST(:status AS string) IS NULL OR t.status = :status) " +
+            "AND (CAST(:category AS string) IS NULL OR t.category = :category) " +
+            "AND (CAST(:minPrice AS bigdecimal) IS NULL OR t.price >= :minPrice) " +
+            "AND (CAST(:maxPrice AS bigdecimal) IS NULL OR t.price <= :maxPrice) " +
+            "AND (CAST(:departureCity AS string) IS NULL OR LOWER(t.departureCity) LIKE LOWER(CONCAT('%', :departureCity, '%'))) " +
+            "AND (CAST(:startDateFrom AS timestamp) IS NULL OR t.startDate >= :startDateFrom) " +
+            "AND (CAST(:startDateTo AS timestamp) IS NULL OR t.startDate <= :startDateTo) " +
+            "AND (CAST(:minDuration AS integer) IS NULL OR t.duration >= :minDuration) " +
+            "AND (CAST(:maxDuration AS integer) IS NULL OR t.duration <= :maxDuration) " +
+            "AND (CAST(:searchQuery AS string) IS NULL OR LOWER(t.name) LIKE LOWER(CONCAT('%', :searchQuery, '%'))) " +
+            "AND (CAST(:language AS string) IS NULL OR t.language = :language) " +
+            "AND (CAST(:destination AS string) IS NULL OR t.destination = :destination)")
     Page<Tour> findWithFilters(
             @Param("status") TourStatus status,
             @Param("category") TourCategory category,
