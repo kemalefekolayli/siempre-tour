@@ -37,7 +37,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String identifier;
 
         // Auth endpoints - rate limit by IP (stricter)
-        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register")) {
+        if (isAuthRateLimitedPath(path)) {
             bucket = rateLimitConfig.resolveAuthBucket(clientIp);
             identifier = "IP:" + clientIp;
         }
@@ -97,6 +97,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         return request.getRemoteAddr();
+    }
+
+    private boolean isAuthRateLimitedPath(String path) {
+        return path.startsWith("/api/auth/login") ||
+                path.startsWith("/api/auth/register") ||
+                path.startsWith("/api/auth/google") ||
+                path.startsWith("/api/auth/forgot-password") ||
+                path.startsWith("/api/auth/reset-password");
     }
 
     private Long getCurrentUserId() {

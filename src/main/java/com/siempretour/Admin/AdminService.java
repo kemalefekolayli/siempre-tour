@@ -236,6 +236,36 @@ public class AdminService {
                 .build();
     }
 
+    public PagedResponse<AdminContactMessageDto> getContactMessages(int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1), Sort.by("createdAt").descending());
+        Page<ContactMessage> contactPage = contactMessageRepository.findAdminRequestsPaged(null, null, pageable);
+        List<AdminContactMessageDto> content = contactPage.map(this::contactToDto).getContent();
+        int totalPages = contactPage.getTotalPages();
+        return PagedResponse.<AdminContactMessageDto>builder()
+                .content(content)
+                .page(contactPage.getNumber())
+                .size(contactPage.getSize())
+                .totalElements(contactPage.getTotalElements())
+                .totalPages(totalPages)
+                .first(contactPage.isFirst())
+                .last(contactPage.isLast())
+                .hasNext(contactPage.hasNext())
+                .hasPrevious(contactPage.hasPrevious())
+                .build();
+    }
+
+    private AdminContactMessageDto contactToDto(ContactMessage contact) {
+        return AdminContactMessageDto.builder()
+                .id(contact.getId())
+                .name(contact.getName())
+                .email(contact.getEmail())
+                .subject(contact.getSubject())
+                .message(contact.getMessage())
+                .emailSent(contact.isEmailSent())
+                .createdAt(contact.getCreatedAt())
+                .build();
+    }
+
     private PagedResponse<AdminRequestDto> toPaged(List<AdminRequestDto> content, int page, int size, long totalElements) {
         int totalPages = size == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
         return PagedResponse.<AdminRequestDto>builder()

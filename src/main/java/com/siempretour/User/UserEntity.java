@@ -46,9 +46,18 @@ public class UserEntity {
     @Column(nullable = false)
     private Boolean emailVerified = false;
 
+    @Column(length = 120)
+    private String googleId;
+
+    @Column(length = 500)
+    private String avatarUrl;
+
     // Account security
     private Integer failedLoginAttempts = 0;
     private LocalDateTime lockedUntil;
+    @Column(length = 128)
+    private String passwordResetTokenHash;
+    private LocalDateTime passwordResetTokenExpiresAt;
 
     // Audit
     @Column(nullable = false, updatable = false)

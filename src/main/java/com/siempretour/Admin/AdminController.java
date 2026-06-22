@@ -86,6 +86,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getRequests(startDate, endDate, tourId, category, type, page, size));
     }
 
+    @GetMapping("/contact-messages")
+    public ResponseEntity<PagedResponse<AdminContactMessageDto>> getContactMessages(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(adminService.getContactMessages(page, size));
+    }
+
     @GetMapping("/tours")
     public ResponseEntity<PagedResponse<TourResponseDto>> getTours(
             @RequestParam(required = false) String q,
