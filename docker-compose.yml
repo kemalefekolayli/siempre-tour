@@ -32,6 +32,8 @@ services:
       JWT_SECRET: docker-local-dev-secret-key-min-256-bits-long-enough-for-hs256
       RATE_LIMIT_ENABLED: false
       ADMIN_UPLOAD_DIR: /app/uploads/tours
+      # Chatbot: reads OPENAI_API_KEY from the host environment (empty if unset).
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
       - ./uploads/tours:/app/uploads/tours
     depends_on:

@@ -44,3 +44,6 @@ build/
 
 ### Uploads ###
 uploads/
+
+### Secrets / local env (never commit — contains OPENAI_API_KEY etc.) ###
+.env

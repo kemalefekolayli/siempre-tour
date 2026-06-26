@@ -46,6 +46,9 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/by-destination/paged").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/by-slug/**").permitAll()
 
+                        // Public homepage config (drives index.html dynamic sections)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/homepage").permitAll()
+
                         // Public review endpoints
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/by-tour/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/by-destination").permitAll()
@@ -53,6 +56,9 @@ public class SecurityConfig {
 
                         // Contact form (public)
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
+
+                        // Public chat widget endpoint
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/chat").permitAll()
 
                         // Admin-only booking endpoints (must precede the broader authenticated rules
                         // so that GET /api/bookings (list-all) is locked down to admins. The exact-match

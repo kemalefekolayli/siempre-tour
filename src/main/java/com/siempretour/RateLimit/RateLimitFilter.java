@@ -41,6 +41,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             bucket = rateLimitConfig.resolveAuthBucket(clientIp);
             identifier = "IP:" + clientIp;
         }
+        // Chat endpoint - expensive (LLM call), tighter limit (heavy bucket, 10/min)
+        else if (path.startsWith("/api/chat")) {
+            Long userId = getCurrentUserId();
+            String key = userId != null ? "u" + userId : clientIp;
+            bucket = rateLimitConfig.resolveHeavyBucket(key);
+            identifier = "Chat:" + key;
+        }
         // API endpoints - rate limit by user if authenticated, otherwise by IP
         else if (path.startsWith("/api/")) {
             Long userId = getCurrentUserId();

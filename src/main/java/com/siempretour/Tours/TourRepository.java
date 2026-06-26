@@ -67,6 +67,22 @@ public interface TourRepository extends JpaRepository<Tour, Long>, JpaSpecificat
     Page<Tour> findByIsActiveTrueAndDestinationAndLanguageAndCategory(
             String destination, String language, TourCategory category, Pageable pageable);
 
+    /**
+     * Free-text search used by the chat assistant (function calling).
+     * Matches active + published tours whose name, destination or visited
+     * places contain the keyword. An empty keyword matches everything
+     * (useful for "upcoming tours"). Optional language filter; pass null for all.
+     * Postgres orders ASC with NULLS LAST, so upcoming tours come first.
+     */
+    @Query("SELECT t FROM Tour t WHERE t.isActive = true " +
+            "AND t.status = com.siempretour.Tours.Models.TourStatus.PUBLISHED " +
+            "AND (CAST(:lang AS string) IS NULL OR t.language = :lang) " +
+            "AND ( LOWER(t.name) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "   OR LOWER(COALESCE(t.destination, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "   OR LOWER(COALESCE(t.placesVisited, '')) LIKE LOWER(CONCAT('%', :q, '%')) ) " +
+            "ORDER BY t.startDate ASC")
+    List<Tour> searchForChat(@Param("q") String q, @Param("lang") String lang, Pageable pageable);
+
     @Query("SELECT t FROM Tour t WHERE t.isActive = true " +
             "AND (CAST(:status AS string) IS NULL OR t.status = :status) " +
             "AND (CAST(:category AS string) IS NULL OR t.category = :category) " +
