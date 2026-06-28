@@ -37,6 +37,12 @@ public class AdminImageStorageService {
     @Value("${CLOUDINARY_URL:}")
     private String cloudinaryUrl;
 
+    // Public base for locally-stored upload URLs. In prod set to the site origin
+    // (e.g. https://siempretour.com) so images are served via Cloudflare/Pages and
+    // edge-cached. Empty -> use the incoming request's host (correct for local dev).
+    @Value("${ASSET_PUBLIC_BASE:}")
+    private String assetPublicBase;
+
     // Optional delivery transform applied to every served image (auto format/quality).
     @Value("${cloudinary.tours-folder:siempre/tours}")
     private String cloudinaryFolder;
@@ -146,9 +152,12 @@ public class AdminImageStorageService {
             return null;
         }
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        String path = "/uploads/tours/" + storedFilename;
+        if (assetPublicBase != null && !assetPublicBase.isBlank()) {
+            return assetPublicBase.replaceAll("/+$", "") + path;
+        }
         return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/tours/")
-                .path(storedFilename)
+                .path(path)
                 .toUriString();
     }
 
