@@ -61,8 +61,13 @@ public class TourResponseDto {
     private LocalDateTime updatedAt;
     private Boolean isActive;
 
+    // true ise tur admin panelinden eklendi (createdBy dolu); false ise toplu
+    // içe aktarılan/seed tur (fiyatı gerçek değil). Frontend fiyat gösterimini buna göre yapar.
+    private Boolean adminCreated;
+
     // Relationships
     private List<TourDayDto> dayInfo;
+    private List<TourDepartureDto> departures;
     private List<TourRouteStopDto> route;
     private List<TourRouteCoordinateDto> routeCoordinates;
 

@@ -36,6 +36,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("tourId") Long tourId,
             @Param("category") com.siempretour.Tours.Models.TourCategory category);
 
+    // Admin rezervasyon araması: tur adı / kişi adı / e-posta / telefon (q boşsa hepsi),
+    // opsiyonel durum filtresi. En yeni önce.
+    // :q önceden hazırlanmış küçük-harf pattern ("%...%") veya null gelir.
+    // CAST(:q AS string) her yerde parametreyi text olarak tipler; aksi halde null
+    // parametre Postgres'te bytea olarak tiplenip "text ~~ bytea" hatası verir.
+    @Query("SELECT b FROM Booking b WHERE " +
+            "(CAST(:status AS string) IS NULL OR b.status = :status) AND (" +
+            "CAST(:q AS string) IS NULL OR " +
+            "LOWER(b.tour.name) LIKE CAST(:q AS string) OR " +
+            "LOWER(b.userName) LIKE CAST(:q AS string) OR " +
+            "LOWER(b.userEmail) LIKE CAST(:q AS string) OR " +
+            "LOWER(b.userPhone) LIKE CAST(:q AS string)) " +
+            "ORDER BY b.createdAt DESC")
+    List<Booking> searchBookings(@Param("q") String q, @Param("status") BookingStatus status);
+
     @Query("SELECT b FROM Booking b WHERE (CAST(:startDate AS timestamp) IS NULL OR b.createdAt >= :startDate) " +
             "AND (CAST(:endDate AS timestamp) IS NULL OR b.createdAt <= :endDate) " +
             "AND (CAST(:tourId AS long) IS NULL OR b.tour.id = :tourId) " +

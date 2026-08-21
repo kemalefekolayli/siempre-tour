@@ -80,6 +80,7 @@ public class TourUpdateDto {
 
     // Relationships
     private List<TourDayDto> dayInfo;
+    private List<TourDepartureDto> departures;
     private List<TourRouteStopDto> route;
     private List<TourRouteCoordinateDto> routeCoordinates;
 }

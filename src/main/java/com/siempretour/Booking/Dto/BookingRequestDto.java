@@ -13,6 +13,9 @@ public class BookingRequestDto {
 
     private String tourSlug;
 
+    // Seçilen kalkış tarihi (çoklu tarih); yoksa tur seviyesinde rezervasyon yapılır.
+    private Long departureId;
+
     // Optional fields for auto-creating tour if needed
     private String tourName;
     private String tourDestination;
@@ -29,6 +32,9 @@ public class BookingRequestDto {
 
     @NotBlank(message = "Phone is required")
     private String userPhone;
+
+    // Rezervasyon formunda girilen e-posta; boşsa hesabın e-postası kullanılır.
+    private String userEmail;
 
     private String userMessage; // Özel istek/not
 }

@@ -1,11 +1,13 @@
 package com.siempretour.Booking;
 
 import com.siempretour.Tours.Models.Tour;
+import com.siempretour.Tours.Models.TourDeparture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -21,6 +23,14 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tour_id", nullable = false)
     private Tour tour;
+
+    // Seçilen kalkış (çoklu tarih). Eski rezervasyonlarda null olabilir.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departure_id")
+    private TourDeparture departure;
+
+    // Seçilen kalkış tarihinin anlık kopyası (kalkış silinse bile tarih korunur).
+    private LocalDate departureDate;
 
     @Column(nullable = false, length = 100)
     private Long userId; // Supabase user ID

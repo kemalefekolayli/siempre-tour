@@ -64,9 +64,11 @@ public class SecurityConfig {
                         // so that GET /api/bookings (list-all) is locked down to admins. The exact-match
                         // pattern "/api/bookings" only catches the root collection; nested user routes
                         // like /api/bookings/me and /api/bookings/{id} are handled below.)
-                        .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**").hasRole("ADMIN")
-                        .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject").hasRole("ADMIN")
+                        .requestMatchers("/api/bookings/pending", "/api/bookings/all", "/api/bookings/tour/**", "/api/bookings/search").hasRole("ADMIN")
+                        .requestMatchers("/api/bookings/{id}/approve", "/api/bookings/{id}/reject", "/api/bookings/{id}/cancel").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings").hasRole("ADMIN")
+                        // Rezervasyon silme yalnızca admin. Aşağıdaki {id} "authenticated" kuralından ÖNCE gelmeli.
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/bookings/{id}").hasRole("ADMIN")
 
                         // User endpoints (authenticated)
                         .requestMatchers("/api/auth/me", "/api/auth/change-password").authenticated()
@@ -81,6 +83,12 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tours/**").hasRole("ADMIN")
                         .requestMatchers("/api/tours/my-tours").hasRole("ADMIN")
+
+                        // Ships: okuma herkese açık; yazma/görsel yükleme yalnızca admin.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/ships", "/api/ships/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/ships", "/api/ships/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/ships/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/ships/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/pending").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/reviews/{id}/approve", "/api/reviews/{id}/reject").hasRole("ADMIN")
                         .requestMatchers("/api/auth/users/**").hasRole("ADMIN")

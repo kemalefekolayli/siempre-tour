@@ -8,6 +8,7 @@ import com.siempretour.Exceptions.ErrorCodes;
 import com.siempretour.Exceptions.GlobalException;
 import com.siempretour.Security.JwtHelper;
 import com.siempretour.Tours.Models.Tour;
+import com.siempretour.Tours.Models.TourDeparture;
 import com.siempretour.Tours.TourRepository;
 import com.siempretour.User.UserEntity;
 import com.siempretour.User.UserEntityRepository;
@@ -35,7 +36,10 @@ public class BookingService {
         Long userId = jwtHelper.getCurrentUserId();
         UserEntity user = userEntityRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(ErrorCodes.AUTH_USER_NOT_FOUND));
-        String userEmail = user.getEmail();
+        // Rezervasyon formunda e-posta girildiyse onu kullan; yoksa hesabın e-postası.
+        String userEmail = (dto.getUserEmail() != null && !dto.getUserEmail().isBlank())
+                ? dto.getUserEmail().trim()
+                : user.getEmail();
 
         Tour tour;
         if (dto.getTourSlug() != null && !dto.getTourSlug().isEmpty()) {
@@ -48,18 +52,37 @@ public class BookingService {
             throw new GlobalException(ErrorCodes.VALIDATION_ERROR); // Todo: Add specific error code
         }
 
-        // Check if tour is bookable
-        if (!tour.isBookable()) {
-            throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
-        }
+        // Seçilen kalkış (çoklu tarih). Varsa kontenjan/uygunluk kalkış seviyesinde
+        // değerlendirilir; yoksa mevcut tur seviyesindeki mantık korunur.
+        TourDeparture selectedDeparture = null;
+        if (dto.getDepartureId() != null) {
+            final Long departureId = dto.getDepartureId();
+            selectedDeparture = tour.getDepartures().stream()
+                    .filter(d -> departureId.equals(d.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE));
+            if (selectedDeparture.getAvailableSeats() != null
+                    && selectedDeparture.getAvailableSeats() < dto.getNumberOfPeople()) {
+                throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            }
+        } else {
+            // Check if tour is bookable
+            if (!tour.isBookable()) {
+                throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            }
 
-        // Check if enough seats available
-        if (tour.getAvailableSeats() < dto.getNumberOfPeople()) {
-            throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            // Check if enough seats available
+            if (tour.getAvailableSeats() < dto.getNumberOfPeople()) {
+                throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            }
         }
 
         Booking booking = new Booking();
         booking.setTour(tour);
+        if (selectedDeparture != null) {
+            booking.setDeparture(selectedDeparture);
+            booking.setDepartureDate(selectedDeparture.getDepartureDate());
+        }
         booking.setUserId(userId);
         booking.setUserEmail(userEmail);
         booking.setUserName(dto.getUserName());
@@ -148,15 +171,25 @@ public class BookingService {
         }
 
         Tour tour = booking.getTour();
+        TourDeparture departure = booking.getDeparture();
 
-        // Check if still enough seats
-        if (tour.getAvailableSeats() < booking.getNumberOfPeople()) {
-            throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+        if (departure != null && departure.getAvailableSeats() != null) {
+            // Kontenjan seçilen kalkış seviyesinde tutuluyor.
+            if (departure.getAvailableSeats() < booking.getNumberOfPeople()) {
+                throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            }
+            departure.setAvailableSeats(departure.getAvailableSeats() - booking.getNumberOfPeople());
+            tourRepository.save(tour); // departures cascade ile persist edilir
+        } else {
+            // Check if still enough seats
+            if (tour.getAvailableSeats() < booking.getNumberOfPeople()) {
+                throw new GlobalException(ErrorCodes.TOUR_NOT_BOOKABLE);
+            }
+
+            // Decrease available seats
+            tour.decrementAvailableSeats(booking.getNumberOfPeople());
+            tourRepository.save(tour);
         }
-
-        // Decrease available seats
-        tour.decrementAvailableSeats(booking.getNumberOfPeople());
-        tourRepository.save(tour);
 
         // Update booking
         booking.setStatus(BookingStatus.APPROVED);
@@ -224,6 +257,34 @@ public class BookingService {
         return mapToResponseDto(updatedBooking);
     }
 
+    // Admin: rezervasyonu kalıcı olarak siler. Rezervasyon ONAYLI ise tuttuğu
+    // kontenjan (kalkış varsa kalkış seviyesinde, yoksa tur seviyesinde) geri eklenir.
+    @Transactional
+    public void deleteBooking(Long bookingId) {
+        if (!jwtHelper.hasRole("ADMIN")) {
+            throw new GlobalException(ErrorCodes.VALIDATION_ERROR);
+        }
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new GlobalException(ErrorCodes.RESERVATION_COULD_NOT_BE_CREATED));
+
+        // Yalnızca ONAYLI rezervasyonlar kontenjan tutar; onları silerken iade et.
+        if (booking.getStatus() == BookingStatus.APPROVED) {
+            Tour tour = booking.getTour();
+            TourDeparture departure = booking.getDeparture();
+            if (departure != null && departure.getAvailableSeats() != null) {
+                departure.setAvailableSeats(departure.getAvailableSeats() + booking.getNumberOfPeople());
+                tourRepository.save(tour); // departures cascade ile persist edilir
+            } else if (tour != null) {
+                tour.incrementAvailableSeats(booking.getNumberOfPeople());
+                tourRepository.save(tour);
+            }
+        }
+
+        bookingRepository.delete(booking);
+        log.info("Booking deleted: {} (status was {})", bookingId, booking.getStatus());
+    }
+
     public BookingResponseDto getBookingById(Long bookingId) {
         Long userId = jwtHelper.getCurrentUserId(); // String değil Long!
         boolean isAdmin = jwtHelper.hasRole("ADMIN");
@@ -257,6 +318,30 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    // Admin rezervasyon araması: tur adı / kişi adı / e-posta / telefon + opsiyonel durum.
+    public List<BookingResponseDto> searchBookings(String q, String status) {
+        // Admin only
+        if (!jwtHelper.hasRole("ADMIN")) {
+            throw new GlobalException(ErrorCodes.VALIDATION_ERROR);
+        }
+
+        // LIKE pattern'i burada kur; boşsa null (sorgu "hepsi" olarak davranır).
+        String normalizedQ = (q != null && !q.isBlank()) ? "%" + q.trim().toLowerCase() + "%" : null;
+
+        BookingStatus statusFilter = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                statusFilter = BookingStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                // Geçersiz durum -> filtre uygulanmaz (tümü)
+            }
+        }
+
+        return bookingRepository.searchBookings(normalizedQ, statusFilter).stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
     public List<BookingResponseDto> getBookingsByTour(Long tourId) {
         // Admin only
         if (!jwtHelper.hasRole("ADMIN")) {
@@ -284,6 +369,15 @@ public class BookingService {
         dto.setId(booking.getId());
         dto.setTourId(booking.getTour().getId());
         dto.setTourName(booking.getTour().getName());
+        dto.setTourDestination(booking.getTour().getDestination());
+        dto.setTourCategory(booking.getTour().getCategory() != null ? booking.getTour().getCategory().name() : null);
+        if (booking.getDeparture() != null) {
+            dto.setDepartureId(booking.getDeparture().getId());
+            dto.setDepartureReturnDate(booking.getDeparture().getReturnDate());
+        }
+        dto.setDepartureDate(booking.getDepartureDate());
+        dto.setUserMessage(booking.getUserMessage());
+        dto.setAdminNote(booking.getAdminNote());
         dto.setUserId(booking.getUserId());
         dto.setUserEmail(booking.getUserEmail());
         dto.setUserName(booking.getUserName());

@@ -161,6 +161,11 @@ public class Tour {
     @JsonManagedReference
     private List<TourDay> dayInfo = new ArrayList<>();
 
+    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("departureDate ASC")
+    @JsonManagedReference("tour-departures")
+    private List<TourDeparture> departures = new ArrayList<>();
+
     @ElementCollection
     @CollectionTable(name = "tour_routes", joinColumns = @JoinColumn(name = "tour_id"))
     @OrderColumn(name = "route_order")
@@ -208,6 +213,18 @@ public class Tour {
         }
     }
 
+    // Onaylı bir rezervasyon iptal/silindiğinde kontenjanı geri ekler ve
+    // gerekirse SOLD_OUT durumundan çıkarır.
+    public void incrementAvailableSeats(int count) {
+        if (availableSeats == null) {
+            availableSeats = 0;
+        }
+        availableSeats += count;
+        if (status == TourStatus.SOLD_OUT && availableSeats > 0) {
+            status = TourStatus.PUBLISHED;
+        }
+    }
+
     // ==================== Helper for TourDay management ====================
 
     public void setDayInfoFromList(List<TourDay> days) {
@@ -216,6 +233,16 @@ public class Tour {
             for (TourDay day : days) {
                 day.setTour(this);
                 this.dayInfo.add(day);
+            }
+        }
+    }
+
+    public void setDeparturesFromList(List<TourDeparture> newDepartures) {
+        this.departures.clear();
+        if (newDepartures != null) {
+            for (TourDeparture departure : newDepartures) {
+                departure.setTour(this);
+                this.departures.add(departure);
             }
         }
     }

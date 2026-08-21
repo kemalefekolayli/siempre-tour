@@ -130,6 +130,14 @@ public class TourService {
             }
         }
 
+        // Update departures (kalkış tarihleri)
+        if (dto.getDepartures() != null) {
+            tour.getDepartures().clear();
+            for (TourDepartureDto depDto : dto.getDepartures()) {
+                tour.getDepartures().add(buildDeparture(depDto, tour));
+            }
+        }
+
         // Update route
         if (dto.getRoute() != null) {
             tour.setRoute(dto.getRoute().stream()
@@ -357,6 +365,13 @@ public class TourService {
             }
         }
 
+        // Departures (kalkış tarihleri)
+        if (dto.getDepartures() != null) {
+            for (TourDepartureDto depDto : dto.getDepartures()) {
+                tour.getDepartures().add(buildDeparture(depDto, tour));
+            }
+        }
+
         // Route
         if (dto.getRoute() != null) {
             tour.setRoute(dto.getRoute().stream()
@@ -400,6 +415,23 @@ public class TourService {
                 .build();
     }
 
+    private TourDeparture buildDeparture(TourDepartureDto depDto, Tour tour) {
+        TourDeparture departure = new TourDeparture();
+        departure.setDepartureDate(depDto.getDepartureDate());
+        departure.setReturnDate(depDto.getReturnDate());
+        departure.setPrice(depDto.getPrice());
+        departure.setDiscountedPrice(depDto.getDiscountedPrice());
+        departure.setMaxSeats(depDto.getMaxSeats());
+        // Kontenjan belirtilmemişse maxSeats'ten türet
+        Integer available = depDto.getAvailableSeats();
+        if (available == null) {
+            available = depDto.getMaxSeats();
+        }
+        departure.setAvailableSeats(available);
+        departure.setTour(tour);
+        return departure;
+    }
+
     private TourResponseDto mapToResponseDto(Tour tour) {
         TourResponseDto dto = new TourResponseDto();
         dto.setId(tour.getId());
@@ -439,6 +471,7 @@ public class TourService {
         dto.setShipName(tour.getShipName());
         dto.setShipCompany(tour.getShipCompany());
         dto.setIsActive(tour.getIsActive());
+        dto.setAdminCreated(tour.getCreatedBy() != null);
         dto.setCreatedAt(tour.getCreatedAt());
         dto.setUpdatedAt(tour.getUpdatedAt());
 
@@ -458,6 +491,21 @@ public class TourService {
                             .dayNumber(day.getDayNumber())
                             .title(day.getTitle())
                             .description(day.getDescription())
+                            .build())
+                    .collect(Collectors.toList()));
+        }
+
+        // Departures (kalkış tarihleri)
+        if (tour.getDepartures() != null) {
+            dto.setDepartures(tour.getDepartures().stream()
+                    .map(dep -> TourDepartureDto.builder()
+                            .id(dep.getId())
+                            .departureDate(dep.getDepartureDate())
+                            .returnDate(dep.getReturnDate())
+                            .price(dep.getPrice())
+                            .discountedPrice(dep.getDiscountedPrice())
+                            .maxSeats(dep.getMaxSeats())
+                            .availableSeats(dep.getAvailableSeats())
                             .build())
                     .collect(Collectors.toList()));
         }

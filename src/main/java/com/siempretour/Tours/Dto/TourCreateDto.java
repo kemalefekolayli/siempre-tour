@@ -82,6 +82,9 @@ public class TourCreateDto {
     // Day-by-day itinerary
     private List<TourDayDto> dayInfo;
 
+    // Kalkış tarihleri (çoklu sefer)
+    private List<TourDepartureDto> departures;
+
     // Route
     private List<TourRouteStopDto> route;
     private List<TourRouteCoordinateDto> routeCoordinates;

@@ -53,10 +53,27 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    // Admin: rezervasyon araması (tur/kişi). "/search" -> {bookingId}'den ÖNCE tanımlı olmalı,
+    // yoksa "search" Long olarak parse edilmeye çalışılır.
+    @GetMapping("/search")
+    public ResponseEntity<List<BookingResponseDto>> searchBookings(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(bookingService.searchBookings(q, status));
+    }
+
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingResponseDto> getBookingById(@PathVariable Long bookingId) {
         BookingResponseDto response = bookingService.getBookingById(bookingId);
         return ResponseEntity.ok(response);
+    }
+
+    // Admin: rezervasyonu kalıcı olarak sil (güvenlik katmanında ADMIN'e kilitli).
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable Long bookingId) {
+        log.info("Deleting booking with ID: {}", bookingId);
+        bookingService.deleteBooking(bookingId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
