@@ -73,6 +73,11 @@ public class Tour {
     @Column(length = 500)
     private String imagealt;
 
+    // Path/URL to the detailed tour guide PDF, uploaded from the admin panel
+    // (served via /uploads/tours/... like the images, or a Cloudinary raw URL).
+    @Column(length = 500)
+    private String detailPdfUrl;
+
     // ==================== Nullable Future-Use Fields ====================
 
     @Column(length = 100)

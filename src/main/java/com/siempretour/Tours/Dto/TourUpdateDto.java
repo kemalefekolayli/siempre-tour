@@ -37,6 +37,7 @@ public class TourUpdateDto {
     private String image5;
     private String image6;
     private String imagealt;
+    private String detailPdfUrl;
 
     // Nullable future-use
     private String personNumber;

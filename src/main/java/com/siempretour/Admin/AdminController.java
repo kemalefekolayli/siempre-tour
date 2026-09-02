@@ -33,6 +33,7 @@ public class AdminController {
     private final AdminService adminService;
     private final TourService tourService;
     private final AdminImageStorageService imageStorageService;
+    private final AdminPdfStorageService pdfStorageService;
 
     @GetMapping("/analytics/summary")
     public ResponseEntity<AdminSummaryDto> getSummary(
@@ -152,6 +153,11 @@ public class AdminController {
     @PostMapping(value = "/tours/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AdminImageUploadResponseDto> uploadTourImages(@RequestParam("files") List<MultipartFile> files) {
         return ResponseEntity.ok(imageStorageService.storeTourImages(files));
+    }
+
+    @PostMapping(value = "/tours/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AdminPdfUploadResponseDto> uploadTourPdf(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(pdfStorageService.storeTourPdf(file));
     }
 
     @GetMapping("/metadata")
