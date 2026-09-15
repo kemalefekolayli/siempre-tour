@@ -258,7 +258,15 @@ public class TourService {
 
     public PagedResponse<TourResponseDto> filterTours(TourFilterDto filter, int page, int size,
             String sortBy, String sortDirection) {
-        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Pageable requested = createPageable(page, size, sortBy, sortDirection);
+
+        // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
+        // seed turlardan önce gösterilsin; her grup kendi içinde istenen sıralamayı korur
+        // (varsayılan: en yeni eklenen tur en başta).
+        Sort adminFirst = Sort.by(Sort.Order.asc("createdBy").nullsLast());
+        Pageable pageable = PageRequest.of(
+                requested.getPageNumber(), requested.getPageSize(),
+                adminFirst.and(requested.getSort()));
 
         Page<Tour> tourPage = tourRepository.findAll(TourSpecification.withFilters(filter), pageable);
 
