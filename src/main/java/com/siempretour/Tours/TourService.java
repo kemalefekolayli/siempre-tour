@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -199,7 +200,12 @@ public class TourService {
         } else {
             tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguage(destination, language);
         }
+        // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
+        // seed turlardan önce gösterilsin; her grup içinde en yeni tur önce gelsin.
         return tours.stream()
+                .sorted(Comparator
+                        .comparing((Tour t) -> t.getCreatedBy() == null)
+                        .thenComparing(Tour::getCreatedAt, Comparator.reverseOrder()))
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
