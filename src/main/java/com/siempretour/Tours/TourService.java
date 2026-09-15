@@ -11,9 +11,11 @@ import com.siempretour.Tours.Models.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -201,11 +203,19 @@ public class TourService {
             tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguage(destination, language);
         }
         // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
-        // seed turlardan önce gösterilsin; her grup içinde en yeni tur önce gelsin.
+        // seed turlardan (createdBy boş) önce gösterilsin. Admin turları kendi
+        // içinde en yeni eklenen önce, seed turlar ise gün sayısı çoktan aza sıralanır.
+        Comparator<Tour> byAdminFirst = Comparator.comparing((Tour t) -> t.getCreatedBy() == null);
+        Comparator<Tour> perGroupDefault = (t1, t2) -> {
+            if (t1.getCreatedBy() != null) {
+                return t2.getCreatedAt().compareTo(t1.getCreatedAt());
+            }
+            int d1 = t1.getDuration() != null ? t1.getDuration() : 0;
+            int d2 = t2.getDuration() != null ? t2.getDuration() : 0;
+            return Integer.compare(d2, d1);
+        };
         return tours.stream()
-                .sorted(Comparator
-                        .comparing((Tour t) -> t.getCreatedBy() == null)
-                        .thenComparing(Tour::getCreatedAt, Comparator.reverseOrder()))
+                .sorted(byAdminFirst.thenComparing(perGroupDefault))
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -258,18 +268,41 @@ public class TourService {
 
     public PagedResponse<TourResponseDto> filterTours(TourFilterDto filter, int page, int size,
             String sortBy, String sortDirection) {
-        Pageable requested = createPageable(page, size, sortBy, sortDirection);
+        int normalizedPage = PaginationConstants.normalizePageNumber(page);
+        int normalizedSize = PaginationConstants.normalizePageSize(size);
 
         // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
-        // seed turlardan önce gösterilsin; her grup kendi içinde istenen sıralamayı korur
-        // (varsayılan: en yeni eklenen tur en başta).
-        Sort adminFirst = Sort.by(Sort.Order.asc("createdBy").nullsLast());
-        Pageable pageable = PageRequest.of(
-                requested.getPageNumber(), requested.getPageSize(),
-                adminFirst.and(requested.getSort()));
+        // seed turlardan (createdBy boş) önce gösterilsin. "Gün sayısı" sıralama
+        // butonu aktifse iki grup da aynı yönde gün sayısına göre sıralanır; aksi
+        // halde admin turları en yeni eklenen önde, seed turlar ise gün sayısı
+        // çoktan aza sıralanır. İki grup ayrı sorgulanıp birleştirildiği için bu
+        // gruplar arası öncelik hiçbir zaman bozulmaz.
+        boolean durationSortRequested = "duration".equalsIgnoreCase(sortBy);
+        Sort.Direction durationDirection = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        Page<Tour> tourPage = tourRepository.findAll(TourSpecification.withFilters(filter), pageable);
+        Sort adminSort = durationSortRequested
+                ? Sort.by(durationDirection, "duration")
+                : Sort.by(Sort.Direction.DESC, "createdAt");
+        Sort seedSort = durationSortRequested
+                ? Sort.by(durationDirection, "duration")
+                : Sort.by(Sort.Direction.DESC, "duration");
 
+        Specification<Tour> baseSpec = TourSpecification.withFilters(filter);
+        List<Tour> adminTours = tourRepository.findAll(
+                baseSpec.and((root, q, cb) -> cb.isNotNull(root.get("createdBy"))), adminSort);
+        List<Tour> seedTours = tourRepository.findAll(
+                baseSpec.and((root, q, cb) -> cb.isNull(root.get("createdBy"))), seedSort);
+
+        List<Tour> combined = new ArrayList<>(adminTours.size() + seedTours.size());
+        combined.addAll(adminTours);
+        combined.addAll(seedTours);
+
+        int total = combined.size();
+        int fromIndex = Math.min(normalizedPage * normalizedSize, total);
+        int toIndex = Math.min(fromIndex + normalizedSize, total);
+        List<Tour> pageContent = combined.subList(fromIndex, toIndex);
+
+        Page<Tour> tourPage = new PageImpl<>(pageContent, PageRequest.of(normalizedPage, normalizedSize), total);
         return mapToPagedResponse(tourPage);
     }
 
