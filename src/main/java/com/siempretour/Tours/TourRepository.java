@@ -68,6 +68,20 @@ public interface TourRepository extends JpaRepository<Tour, Long>, JpaSpecificat
             String destination, String language, TourCategory category, Pageable pageable);
 
     /**
+     * Çok ülkeli turlar: bir tur birden fazla ülke ziyaret edebilir (ör. "İtalya-Fransa-İspanya"
+     * turu). Ana `destination` alanına ek olarak `destinations` listesinde (tour_destinations
+     * tablosu) o ülke varsa da eşleşir, böylece tur her ilgili ülkenin sayfasında görünür.
+     */
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN t.destinations d WHERE t.isActive = true " +
+            "AND t.language = :language AND (t.destination = :destination OR d = :destination)")
+    List<Tour> findActiveByDestinationOrMember(@Param("language") String language, @Param("destination") String destination);
+
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN t.destinations d WHERE t.isActive = true " +
+            "AND t.language = :language AND t.category = :category AND (t.destination = :destination OR d = :destination)")
+    List<Tour> findActiveByDestinationOrMemberAndCategory(
+            @Param("language") String language, @Param("destination") String destination, @Param("category") TourCategory category);
+
+    /**
      * Free-text search used by the chat assistant (function calling).
      * Matches active + published tours whose name, destination or visited
      * places contain the keyword. An empty keyword matches everything

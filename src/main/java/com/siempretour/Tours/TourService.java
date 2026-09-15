@@ -198,9 +198,9 @@ public class TourService {
         List<Tour> tours;
         if (category != null && !category.isEmpty()) {
             TourCategory tourCategory = TourCategory.fromString(category);
-            tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguageAndCategory(destination, language, tourCategory);
+            tours = tourRepository.findActiveByDestinationOrMemberAndCategory(language, destination, tourCategory);
         } else {
-            tours = tourRepository.findByIsActiveTrueAndDestinationAndLanguage(destination, language);
+            tours = tourRepository.findActiveByDestinationOrMember(language, destination);
         }
         // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
         // seed turlardan (createdBy boş) önce gösterilsin. Admin turları kendi

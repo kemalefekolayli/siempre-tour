@@ -28,9 +28,14 @@ public class TourSpecification {
                 predicates.add(cb.equal(root.get("language"), filter.getLanguage()));
             }
 
-            // Simple destination match (exact match on the destination field)
+            // Destination match: either the tour's primary destination, or (for multi-country
+            // tours) the destinations list contains it - so a tour shows up on every one of its
+            // countries' pages, not just the primary one.
             if (filter.getDestination() != null && !filter.getDestination().isBlank()) {
-                predicates.add(cb.equal(root.get("destination"), filter.getDestination()));
+                predicates.add(cb.or(
+                        cb.equal(root.get("destination"), filter.getDestination()),
+                        cb.isMember(filter.getDestination(), root.get("destinations"))
+                ));
             }
 
             // Text search - name (case-insensitive partial match)
