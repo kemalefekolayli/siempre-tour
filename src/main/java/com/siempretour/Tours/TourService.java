@@ -19,6 +19,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -203,12 +204,18 @@ public class TourService {
             tours = tourRepository.findActiveByDestinationOrMember(language, destination);
         }
         // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
-        // seed turlardan (createdBy boş) önce gösterilsin. Admin turları kendi
-        // içinde en yeni eklenen önce, seed turlar ise gün sayısı çoktan aza sıralanır.
+        // seed turlardan (createdBy boş) önce gösterilsin. Admin turları kendi içinde
+        // bugüne en yakın (en erken) kalkış tarihine göre sıralanır (tarihi olmayanlar
+        // en sona); seed turlar ise gün sayısı çoktan aza sıralanır.
         Comparator<Tour> byAdminFirst = Comparator.comparing((Tour t) -> t.getCreatedBy() == null);
         Comparator<Tour> perGroupDefault = (t1, t2) -> {
             if (t1.getCreatedBy() != null) {
-                return t2.getCreatedAt().compareTo(t1.getCreatedAt());
+                LocalDate d1 = earliestUpcomingDeparture(t1);
+                LocalDate d2 = earliestUpcomingDeparture(t2);
+                if (d1 == null && d2 == null) return 0;
+                if (d1 == null) return 1;
+                if (d2 == null) return -1;
+                return d1.compareTo(d2);
             }
             int d1 = t1.getDuration() != null ? t1.getDuration() : 0;
             int d2 = t2.getDuration() != null ? t2.getDuration() : 0;
@@ -218,6 +225,23 @@ public class TourService {
                 .sorted(byAdminFirst.thenComparing(perGroupDefault))
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    // Bir turun bugünden itibaren (dahil) en erken kalkış tarihi; kalkış tarihi
+    // (departures) yoksa startDate'e düşer; hiçbiri gelecekte değilse null döner.
+    private LocalDate earliestUpcomingDeparture(Tour tour) {
+        LocalDate today = LocalDate.now();
+        LocalDate best = tour.getDepartures().stream()
+                .map(TourDeparture::getDepartureDate)
+                .filter(d -> d != null && !d.isBefore(today))
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+        if (best != null) return best;
+        if (tour.getStartDate() != null) {
+            LocalDate start = tour.getStartDate().toLocalDate();
+            if (!start.isBefore(today)) return start;
+        }
+        return null;
     }
 
     public PagedResponse<TourResponseDto> getToursByDestination(
@@ -274,22 +298,27 @@ public class TourService {
         // Admin panelinden elle girilen turlar (createdBy dolu) toplu içe aktarılan
         // seed turlardan (createdBy boş) önce gösterilsin. "Gün sayısı" sıralama
         // butonu aktifse iki grup da aynı yönde gün sayısına göre sıralanır; aksi
-        // halde admin turları en yeni eklenen önde, seed turlar ise gün sayısı
-        // çoktan aza sıralanır. İki grup ayrı sorgulanıp birleştirildiği için bu
-        // gruplar arası öncelik hiçbir zaman bozulmaz.
+        // halde admin turları bugüne en yakın kalkış tarihine göre (tarihi olmayanlar
+        // en sonda), seed turlar ise gün sayısı çoktan aza sıralanır. İki grup ayrı
+        // sorgulanıp birleştirildiği için bu gruplar arası öncelik hiçbir zaman bozulmaz.
         boolean durationSortRequested = "duration".equalsIgnoreCase(sortBy);
         Sort.Direction durationDirection = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        Sort adminSort = durationSortRequested
-                ? Sort.by(durationDirection, "duration")
-                : Sort.by(Sort.Direction.DESC, "createdAt");
         Sort seedSort = durationSortRequested
                 ? Sort.by(durationDirection, "duration")
                 : Sort.by(Sort.Direction.DESC, "duration");
 
         Specification<Tour> baseSpec = TourSpecification.withFilters(filter);
-        List<Tour> adminTours = tourRepository.findAll(
-                baseSpec.and((root, q, cb) -> cb.isNotNull(root.get("createdBy"))), adminSort);
+        List<Tour> adminTours;
+        if (durationSortRequested) {
+            adminTours = tourRepository.findAll(
+                    baseSpec.and((root, q, cb) -> cb.isNotNull(root.get("createdBy"))), Sort.by(durationDirection, "duration"));
+        } else {
+            adminTours = tourRepository.findAll(baseSpec.and((root, q, cb) -> cb.isNotNull(root.get("createdBy"))));
+            adminTours = adminTours.stream()
+                    .sorted(Comparator.comparing(this::earliestUpcomingDeparture, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .collect(Collectors.toList());
+        }
         List<Tour> seedTours = tourRepository.findAll(
                 baseSpec.and((root, q, cb) -> cb.isNull(root.get("createdBy"))), seedSort);
 
