@@ -79,7 +79,7 @@ public class TourService {
         if (dto.getName() != null) tour.setName(dto.getName());
         if (dto.getSlug() != null) tour.setSlug(dto.getSlug());
         if (dto.getLanguage() != null) tour.setLanguage(dto.getLanguage());
-        if (dto.getDestination() != null) tour.setDestination(dto.getDestination());
+        if (dto.getDestination() != null) tour.setDestination(trimOrNull(dto.getDestination()));
         if (dto.getGeneralInfo() != null) tour.setGeneralInfo(dto.getGeneralInfo());
         if (dto.getPlacesVisited() != null) tour.setPlacesVisited(dto.getPlacesVisited());
         if (dto.getWhatExpect() != null) tour.setWhatExpect(dto.getWhatExpect());
@@ -99,7 +99,7 @@ public class TourService {
         if (dto.getMap() != null) tour.setMap(dto.getMap());
         if (dto.getPrice() != null) tour.setPrice(dto.getPrice());
         if (dto.getDiscountedPrice() != null) tour.setDiscountedPrice(dto.getDiscountedPrice());
-        if (dto.getDestinations() != null) tour.setDestinations(dto.getDestinations());
+        if (dto.getDestinations() != null) tour.setDestinations(trimList(dto.getDestinations()));
         if (dto.getDepartureCity() != null) tour.setDepartureCity(dto.getDepartureCity());
         if (dto.getDuration() != null) tour.setDuration(dto.getDuration());
         if (dto.getMinParticipants() != null) tour.setMinParticipants(dto.getMinParticipants());
@@ -386,11 +386,25 @@ public class TourService {
 
     // ==================== Helper Methods ====================
 
+    // Ülke isimlerindeki baştaki/sondaki boşlukları temizler; bunlar "Japan " gibi
+    // görünmez farklarla eşleşme/filtreleme sorunlarına yol açabiliyor (admin panelinden
+    // elle girilirken kolayca oluşabiliyor).
+    private String trimOrNull(String value) {
+        return value != null ? value.trim() : null;
+    }
+
+    private List<String> trimList(List<String> values) {
+        if (values == null) return null;
+        return values.stream()
+                .map(v -> v != null ? v.trim() : null)
+                .collect(Collectors.toList());
+    }
+
     private void mapCreateDtoToEntity(TourCreateDto dto, Tour tour) {
         tour.setName(dto.getName());
         tour.setSlug(dto.getSlug());
         tour.setLanguage(dto.getLanguage() != null ? dto.getLanguage() : "tr");
-        tour.setDestination(dto.getDestination());
+        tour.setDestination(trimOrNull(dto.getDestination()));
         tour.setGeneralInfo(dto.getGeneralInfo());
         tour.setPlacesVisited(dto.getPlacesVisited());
         tour.setWhatExpect(dto.getWhatExpect());
@@ -410,7 +424,7 @@ public class TourService {
         tour.setMap(dto.getMap());
         tour.setPrice(dto.getPrice());
         tour.setDiscountedPrice(dto.getDiscountedPrice());
-        tour.setDestinations(dto.getDestinations() != null ? dto.getDestinations() : new ArrayList<>());
+        tour.setDestinations(dto.getDestinations() != null ? trimList(dto.getDestinations()) : new ArrayList<>());
         tour.setDepartureCity(dto.getDepartureCity());
         tour.setDuration(dto.getDuration());
         tour.setMinParticipants(dto.getMinParticipants());
