@@ -55,6 +55,7 @@ public class TourFilterDto {
     // Status flags
     private Boolean isActive;
     private Boolean includeInactive;           // Admin-only: include active and inactive tours when true
+    private Boolean adminOnly;                 // Only tours entered via the admin panel (createdBy set)
     private Boolean isBookable;             // Custom: active, published, has seats, before deadline
 
     // Sorting

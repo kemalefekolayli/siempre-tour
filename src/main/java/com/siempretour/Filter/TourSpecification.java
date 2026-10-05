@@ -152,6 +152,11 @@ public class TourSpecification {
                 ));
             }
 
+            // Only admin-entered tours (createdBy set); bulk-imported seed tours have no createdBy
+            if (Boolean.TRUE.equals(filter.getAdminOnly())) {
+                predicates.add(cb.isNotNull(root.get("createdBy")));
+            }
+
             // Is active filter
             if (filter.getIsActive() != null) {
                 predicates.add(cb.equal(root.get("isActive"), filter.getIsActive()));
