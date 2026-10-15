@@ -21,7 +21,8 @@ public class GlobalExceptionHandler {
         List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
 
         String errors = fieldErrors.stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage() + " [ rejected value: " + error.getRejectedValue() + " ]")
+                // Rejected values are not echoed back: they can be passwords or other personal data.
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
         ErrorResponse response = new ErrorResponse(
@@ -45,9 +46,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error(ex.getMessage());
+        // Full detail goes to the server log only; the client gets a generic message so internal
+        // details (SQL, class names, paths) never leak.
+        log.error("Unhandled exception", ex);
         ErrorCodes code = ErrorCodes.INTERNAL_SERVER_ERROR;
-        ErrorResponse body = new ErrorResponse(Instant.now(), code.getStatus().value(), code.getCode(), ex.getMessage(), code.getStatus().getReasonPhrase());
+        ErrorResponse body = new ErrorResponse(Instant.now(), code.getStatus().value(), code.getCode(), code.getMessage(), code.getStatus().getReasonPhrase());
 
         return new ResponseEntity<ErrorResponse>(body, code.getStatus());
     }

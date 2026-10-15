@@ -214,7 +214,7 @@ public class Tour {
                 status = TourStatus.SOLD_OUT;
             }
         } else {
-            throw new IllegalStateException("Not enough available seats");
+            throw new com.siempretour.Exceptions.GlobalException(com.siempretour.Exceptions.ErrorCodes.NOT_ENOUGH_SEATS);
         }
     }
 

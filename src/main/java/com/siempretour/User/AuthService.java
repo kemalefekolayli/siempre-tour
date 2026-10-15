@@ -87,14 +87,14 @@ public class AuthService {
         UserEntity user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new GlobalException(ErrorCodes.AUTH_INVALID_CREDENTIALS));
 
-        // Check if account is locked
+        // Locked and inactive accounts get the same answer as a wrong password, so the response
+        // never reveals whether an email is registered or what state the account is in.
         if (user.isAccountLocked()) {
-            throw new GlobalException(ErrorCodes.AUTH_USER_NOT_FOUND); // Don't reveal it's locked
+            throw new GlobalException(ErrorCodes.AUTH_INVALID_CREDENTIALS);
         }
 
-        // Check if account is active
         if (!user.getIsActive()) {
-            throw new GlobalException(ErrorCodes.AUTH_USER_NOT_FOUND);
+            throw new GlobalException(ErrorCodes.AUTH_INVALID_CREDENTIALS);
         }
 
         // Verify password

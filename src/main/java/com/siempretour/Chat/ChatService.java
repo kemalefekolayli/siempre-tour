@@ -88,6 +88,9 @@ public class ChatService {
 
     private static final int RESULT_LIMIT = 15;   // tours returned per search
     private static final int MAX_TOOL_ROUNDS = 3; // safety cap on tool-call loops
+    private static final int MAX_USER_MESSAGE_CHARS = 1000;
+    private static final int MAX_HISTORY_TURNS = 10;
+    private static final int MAX_HISTORY_MESSAGE_CHARS = 2000;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final RestClient restClient;
@@ -127,15 +130,26 @@ public class ChatService {
                     : "Asistan şu anda kullanılamıyor. Lütfen bizimle doğrudan iletişime geçin.");
         }
 
+        // Public endpoint: cap what a caller can push to OpenAI so it can't be used to run up the bill.
+        if (userMessage.length() > MAX_USER_MESSAGE_CHARS) {
+            userMessage = userMessage.substring(0, MAX_USER_MESSAGE_CHARS);
+        }
+
         List<Map<String, Object>> messages = new ArrayList<>();
         messages.add(msg("system", SYSTEM_PROMPT));
         if (req.getHistory() != null) {
-            for (ChatMessage m : req.getHistory()) {
+            List<ChatMessage> history = req.getHistory();
+            int from = Math.max(0, history.size() - MAX_HISTORY_TURNS);
+            for (ChatMessage m : history.subList(from, history.size())) {
                 if (m == null || m.getContent() == null || m.getContent().isBlank()) continue;
                 if (Boolean.TRUE.equals(m.getFailed())) continue; // skip error bubbles
                 String role = "assistant".equalsIgnoreCase(m.getRole()) ? "assistant" : "user";
                 if ("user".equals(role) && m.getContent().trim().equals(userMessage)) continue; // de-dupe
-                messages.add(msg(role, m.getContent()));
+                String content = m.getContent();
+                if (content.length() > MAX_HISTORY_MESSAGE_CHARS) {
+                    content = content.substring(0, MAX_HISTORY_MESSAGE_CHARS);
+                }
+                messages.add(msg(role, content));
             }
         }
         messages.add(msg("user", userMessage));
