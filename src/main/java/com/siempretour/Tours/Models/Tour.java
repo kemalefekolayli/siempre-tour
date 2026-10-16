@@ -78,6 +78,11 @@ public class Tour {
     @Column(length = 500)
     private String detailPdfUrl;
 
+    // Optional tour video shown first in the detail-page gallery: an uploaded
+    // file (/uploads/tours/...mp4) or a YouTube / direct video URL.
+    @Column(length = 1000)
+    private String videoUrl;
+
     // ==================== Nullable Future-Use Fields ====================
 
     @Column(length = 100)

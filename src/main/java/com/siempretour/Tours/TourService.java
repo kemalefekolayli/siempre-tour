@@ -92,6 +92,7 @@ public class TourService {
         if (dto.getImage6() != null) tour.setImage6(dto.getImage6());
         if (dto.getImagealt() != null) tour.setImagealt(dto.getImagealt());
         if (dto.getDetailPdfUrl() != null) tour.setDetailPdfUrl(dto.getDetailPdfUrl());
+        if (dto.getVideoUrl() != null) tour.setVideoUrl(trimOrNull(dto.getVideoUrl()));
         if (dto.getPersonNumber() != null) tour.setPersonNumber(dto.getPersonNumber());
         if (dto.getDates() != null) tour.setDates(dto.getDates());
         if (dto.getMinimumAge() != null) tour.setMinimumAge(dto.getMinimumAge());
@@ -417,6 +418,7 @@ public class TourService {
         tour.setImage6(dto.getImage6());
         tour.setImagealt(dto.getImagealt());
         tour.setDetailPdfUrl(dto.getDetailPdfUrl());
+        tour.setVideoUrl(trimOrNull(dto.getVideoUrl()));
         tour.setPersonNumber(dto.getPersonNumber());
         tour.setDates(dto.getDates());
         tour.setMinimumAge(dto.getMinimumAge());
@@ -543,6 +545,7 @@ public class TourService {
         dto.setImage6(tour.getImage6());
         dto.setImagealt(tour.getImagealt());
         dto.setDetailPdfUrl(tour.getDetailPdfUrl());
+        dto.setVideoUrl(tour.getVideoUrl());
         dto.setPersonNumber(tour.getPersonNumber());
         dto.setDates(tour.getDates());
         dto.setMinimumAge(tour.getMinimumAge());

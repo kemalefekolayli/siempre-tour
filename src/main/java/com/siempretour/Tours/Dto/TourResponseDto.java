@@ -34,6 +34,7 @@ public class TourResponseDto {
     private String image6;
     private String imagealt;
     private String detailPdfUrl;
+    private String videoUrl;
 
     // Nullable future-use
     private String personNumber;
